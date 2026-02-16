@@ -135,7 +135,7 @@ let dataList = [];
 let index = 0;
 
 /* =============================
-   HITUNG TGL SELESAI
+   HITUNG TGL SELESAI (TIDAK DIUBAH)
 ============================= */
 function hitungTanggalSelesai(tglMulai, lamaCuti, jmlCutiBersama) {
   let tgl = new Date(tglMulai);
@@ -158,7 +158,7 @@ function hitungTanggalSelesai(tglMulai, lamaCuti, jmlCutiBersama) {
 }
 
 /* =============================
-   LOAD DATA
+   LOAD DATA (TIDAK DIUBAH)
 ============================= */
 async function loadAll() {
   const { data, error } = await supabaseClient
@@ -174,7 +174,7 @@ async function loadAll() {
 }
 
 /* =============================
-   RENDER 1 DATA
+   RENDER 1 DATA (TAMBAH JABATAN)
 ============================= */
 function render() {
   const d = dataList[index];
@@ -185,17 +185,18 @@ function render() {
       <div class="item"><div class="label">Nama</div><div class="value">${d.nama}</div></div>
       <div class="item"><div class="label">NIP</div><div class="value">${d.nip}</div></div>
 
+      <div class="item"><div class="label">Jabatan</div><div class="value">${d.jabatan || "-"}</div></div>
       <div class="item"><div class="label">No HP</div><div class="value">${d.no_hp}</div></div>
-      <div class="item"><div class="label">Jenis Cuti</div><div class="value">${d.jenis_cuti}</div></div>
 
+      <div class="item"><div class="label">Jenis Cuti</div><div class="value">${d.jenis_cuti}</div></div>
       <div class="item"><div class="label">Tanggal Mulai</div><div class="value">${d.tgl_mulai}</div></div>
+
       <div class="item"><div class="label">Lama Cuti</div><div class="value">${d.lama_cuti} hari</div></div>
+      <div class="item"><div class="label">Alamat</div><div class="value">${d.alamat}</div></div>
 
       <div class="item"><div class="label">Cuti Bersama (hari)</div>
         <input type="number" id="cb" min="0" value="${d.cuti_bersama || 0}">
       </div>
-
-      <div class="item"><div class="label">Alamat</div><div class="value">${d.alamat}</div></div>
 
       <div class="item"><div class="label">File 1</div>${d.file_1_url ? `<a href="${d.file_1_url}" target="_blank">Lihat</a>` : "-"}</div>
       <div class="item"><div class="label">File 2</div>${d.file_2_url ? `<a href="${d.file_2_url}" target="_blank">Lihat</a>` : "-"}</div>
@@ -224,7 +225,7 @@ function render() {
 }
 
 /* =============================
-   UPDATE
+   UPDATE (TIDAK DIUBAH)
 ============================= */
 async function save() {
   const d = dataList[index];
@@ -257,7 +258,7 @@ async function save() {
 }
 
 /* =============================
-   NAVIGASI
+   NAVIGASI & SEARCH (TIDAK DIUBAH)
 ============================= */
 function nextData() {
   if (index < dataList.length - 1) {
@@ -272,9 +273,6 @@ function prevData() {
   }
 }
 
-/* =============================
-   SEARCH AUTOCOMPLETE
-============================= */
 function setupSearch() {
   const input = document.getElementById("search");
   const sug = document.getElementById("suggestions");
