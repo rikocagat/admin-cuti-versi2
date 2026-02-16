@@ -12,45 +12,75 @@ body {
   font-family: Arial, sans-serif;
   background: #f3f5f8;
   margin: 0;
-  padding: 14px;
+  padding: 16px;
 }
 h1 {
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
 }
-.table-wrapper {
-  overflow-x: auto;
-  background: #fff;
+
+.search-box {
+  max-width: 500px;
+  margin: auto;
+  position: relative;
 }
-table {
+.search-box input {
   width: 100%;
-  border-collapse: collapse;
-  min-width: 1800px;
+  padding: 8px;
+  font-size: 14px;
 }
-th, td {
-  border: 1px solid #ddd;
+.suggestions {
+  position: absolute;
+  background: #fff;
+  width: 100%;
+  border: 1px solid #ccc;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 10;
+}
+.suggestions div {
   padding: 6px;
-  font-size: 12px;
-  white-space: nowrap;
-  text-align: center;
-}
-th {
-  background: #0d6efd;
-  color: #fff;
-}
-input, select {
-  font-size: 12px;
-  padding: 4px;
-}
-button {
-  padding: 5px 8px;
-  border: none;
-  border-radius: 4px;
-  color: #fff;
   cursor: pointer;
 }
+.suggestions div:hover {
+  background: #e9ecef;
+}
+
+.card {
+  background: #fff;
+  max-width: 600px;
+  margin: 20px auto;
+  padding: 14px;
+  border-radius: 6px;
+}
+.item {
+  margin-bottom: 10px;
+}
+.label {
+  font-weight: bold;
+  font-size: 13px;
+}
+.value {
+  font-size: 14px;
+}
+
+select, button {
+  padding: 6px;
+  width: 100%;
+  margin-top: 4px;
+}
+.actions {
+  display: flex;
+  gap: 10px;
+}
+.btn {
+  cursor: pointer;
+  border: none;
+  color: #fff;
+  border-radius: 4px;
+}
 .btn-save { background: #198754; }
-.btn-delete { background: #dc3545; }
+.btn-nav { background: #0d6efd; }
 a { color: #0d6efd; }
 </style>
 </head>
@@ -59,26 +89,21 @@ a { color: #0d6efd; }
 
 <h1>DASBOARD ADMIN CUTI</h1>
 
-<div class="table-wrapper">
-<table>
-<thead>
-<tr>
-  <th>Nama</th>
-  <th>Tgl Mulai</th>
-  <th>Lama Cuti</th>
-  <th>Cuti Bersama</th>
-  <th>Tgl Selesai</th>
-  <th>Status</th>
-  <th>Aksi</th>
-</tr>
-</thead>
-<tbody id="tbody"></tbody>
-</table>
+<div class="search-box">
+  <input type="text" id="search" placeholder="Cari nama pegawai...">
+  <div class="suggestions" id="suggestions"></div>
+</div>
+
+<div class="card" id="card"></div>
+
+<div class="actions" style="max-width:600px;margin:auto;">
+  <button class="btn btn-nav" onclick="prevData()">Prev</button>
+  <button class="btn btn-nav" onclick="nextData()">Next</button>
 </div>
 
 <script>
 /* =============================
-   KONFIGURASI SUPABASE
+   SUPABASE
 ============================= */
 const SUPABASE_URL = "https://ufiqibxdgwlysqhinqbz.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_EVSVWnsUriOPA_O3RnGTpg_Zmd4pyAL";
@@ -88,115 +113,174 @@ const supabaseClient = supabase.createClient(
   SUPABASE_ANON_KEY
 );
 
+let dataList = [];
+let index = 0;
+
 /* =============================
-   FUNGSI HITUNG TANGGAL SELESAI
+   HITUNG TGL SELESAI (TETAP)
 ============================= */
 function hitungTanggalSelesai(tglMulai, lamaCuti, cutiBersama) {
-  let tanggal = new Date(tglMulai);
-  let hariTerhitung = 0;
+  let tgl = new Date(tglMulai);
+  let hitung = 0;
 
-  while (hariTerhitung < lamaCuti) {
-    const day = tanggal.getDay();
-
-    if (day !== 0 && day !== 6) {
-      hariTerhitung++;
-    }
-    if (hariTerhitung < lamaCuti) {
-      tanggal.setDate(tanggal.getDate() + 1);
-    }
+  while (hitung < lamaCuti) {
+    const h = tgl.getDay();
+    if (h !== 0 && h !== 6) hitung++;
+    if (hitung < lamaCuti) tgl.setDate(tgl.getDate() + 1);
   }
 
   if (cutiBersama === 1) {
-    tanggal.setDate(tanggal.getDate() + 1);
+    do {
+      tgl.setDate(tgl.getDate() + 1);
+    } while (tgl.getDay() === 0 || tgl.getDay() === 6);
   }
 
-  const yyyy = tanggal.getFullYear();
-  const mm = String(tanggal.getMonth() + 1).padStart(2, '0');
-  const dd = String(tanggal.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
+  return tgl.toISOString().split("T")[0];
 }
 
 /* =============================
-   LOAD DATA
+   LOAD SEMUA DATA
 ============================= */
-async function loadData() {
+async function loadAll() {
   const { data, error } = await supabaseClient
     .from("pengajuan_cuti")
-    .select("id,nama,tgl_mulai,lama_cuti,cuti_bersama,tgl_selesai,status")
+    .select("*")
     .order("created_at", { ascending: false });
 
-  if (error) {
-    alert(error.message);
-    return;
-  }
+  if (error) return alert(error.message);
 
-  const tbody = document.getElementById("tbody");
-  tbody.innerHTML = "";
+  dataList = data;
+  render();
+  setupSearch();
+}
 
-  data.forEach(row => {
-    const tr = document.createElement("tr");
+/* =============================
+   RENDER 1 DATA
+============================= */
+function render() {
+  const d = dataList[index];
+  if (!d) return;
 
-    tr.innerHTML = `
-      <td>${row.nama}</td>
-      <td>${row.tgl_mulai}</td>
-      <td>${row.lama_cuti}</td>
-      <td>
-        <select id="cb_${row.id}">
-          <option value="0" ${row.cuti_bersama == 0 ? "selected" : ""}>Tidak</option>
-          <option value="1" ${row.cuti_bersama == 1 ? "selected" : ""}>Ya</option>
-        </select>
-      </td>
-      <td id="tgl_${row.id}">${row.tgl_selesai || "-"}</td>
-      <td>
-        <select id="status_${row.id}">
-          <option ${row.status === "Diajukan" ? "selected" : ""}>Diajukan</option>
-          <option ${row.status === "Disetujui" ? "selected" : ""}>Disetujui</option>
-          <option ${row.status === "Ditolak" ? "selected" : ""}>Ditolak</option>
-        </select>
-      </td>
-      <td>
-        <button class="btn-save" onclick="updateRow('${row.id}','${row.tgl_mulai}',${row.lama_cuti})">Simpan</button>
-      </td>
-    `;
+  document.getElementById("card").innerHTML = `
+    <div class="item"><div class="label">Nama</div><div class="value">${d.nama}</div></div>
+    <div class="item"><div class="label">NIP</div><div class="value">${d.nip}</div></div>
+    <div class="item"><div class="label">No HP</div><div class="value">${d.no_hp}</div></div>
+    <div class="item"><div class="label">Jenis Cuti</div><div class="value">${d.jenis_cuti}</div></div>
+    <div class="item"><div class="label">Tanggal Mulai</div><div class="value">${d.tgl_mulai}</div></div>
+    <div class="item"><div class="label">Lama Cuti</div><div class="value">${d.lama_cuti}</div></div>
+    <div class="item"><div class="label">Alamat</div><div class="value">${d.alamat}</div></div>
 
-    tbody.appendChild(tr);
-  });
+    <div class="item"><div class="label">File 1</div>${d.file_1_url ? `<a href="${d.file_1_url}" target="_blank">Lihat</a>` : "-"}</div>
+    <div class="item"><div class="label">File 2</div>${d.file_2_url ? `<a href="${d.file_2_url}" target="_blank">Lihat</a>` : "-"}</div>
+    <div class="item"><div class="label">Signature</div>${d.signature_url ? `<a href="${d.signature_url}" target="_blank">Lihat</a>` : "-"}</div>
+
+    <div class="item">
+      <div class="label">Cuti Bersama</div>
+      <select id="cb">
+        <option value="0" ${d.cuti_bersama == 0 ? "selected" : ""}>Tidak</option>
+        <option value="1" ${d.cuti_bersama == 1 ? "selected" : ""}>Ya</option>
+      </select>
+    </div>
+
+    <div class="item">
+      <div class="label">Status</div>
+      <select id="status">
+        <option ${d.status === "Diajukan" ? "selected" : ""}>Diajukan</option>
+        <option ${d.status === "Disetujui" ? "selected" : ""}>Disetujui</option>
+        <option ${d.status === "Ditolak" ? "selected" : ""}>Ditolak</option>
+      </select>
+    </div>
+
+    <div class="item"><div class="label">Tanggal Selesai</div>
+      <div class="value" id="tglSelesai">${d.tgl_selesai || "-"}</div>
+    </div>
+
+    <button class="btn btn-save" onclick="save()">Simpan</button>
+  `;
 }
 
 /* =============================
    UPDATE DATA
 ============================= */
-async function updateRow(id, tglMulai, lamaCuti) {
-  const status = document.getElementById("status_" + id).value;
-  const cutiBersama = parseInt(document.getElementById("cb_" + id).value);
+async function save() {
+  const d = dataList[index];
+  const cb = parseInt(document.getElementById("cb").value);
+  const status = document.getElementById("status").value;
 
   const tglSelesai = hitungTanggalSelesai(
-    tglMulai,
-    lamaCuti,
-    cutiBersama
+    d.tgl_mulai,
+    d.lama_cuti,
+    cb
   );
 
   const { error } = await supabaseClient
     .from("pengajuan_cuti")
     .update({
       status: status,
-      cuti_bersama: cutiBersama,
+      cuti_bersama: cb,
       tgl_selesai: tglSelesai
     })
-    .eq("id", id);
+    .eq("id", d.id);
 
-  if (error) {
-    alert(error.message);
-  } else {
-    document.getElementById("tgl_" + id).innerText = tglSelesai;
-    alert("Data berhasil diperbarui");
+  if (error) return alert(error.message);
+
+  d.status = status;
+  d.cuti_bersama = cb;
+  d.tgl_selesai = tglSelesai;
+  document.getElementById("tglSelesai").innerText = tglSelesai;
+
+  alert("Data berhasil diperbarui");
+}
+
+/* =============================
+   NAVIGASI
+============================= */
+function nextData() {
+  if (index < dataList.length - 1) {
+    index++;
+    render();
   }
+}
+function prevData() {
+  if (index > 0) {
+    index--;
+    render();
+  }
+}
+
+/* =============================
+   SEARCH AUTOCOMPLETE
+============================= */
+function setupSearch() {
+  const input = document.getElementById("search");
+  const sug = document.getElementById("suggestions");
+
+  input.addEventListener("input", () => {
+    const val = input.value.toLowerCase();
+    sug.innerHTML = "";
+    if (!val) return;
+
+    dataList
+      .filter(d => d.nama.toLowerCase().includes(val))
+      .slice(0, 5)
+      .forEach(d => {
+        const div = document.createElement("div");
+        div.textContent = d.nama;
+        div.onclick = () => {
+          index = dataList.findIndex(x => x.id === d.id);
+          sug.innerHTML = "";
+          input.value = d.nama;
+          render();
+        };
+        sug.appendChild(div);
+      });
+  });
 }
 
 /* =============================
    INIT
 ============================= */
-loadData();
+loadAll();
 </script>
 
 </body>
