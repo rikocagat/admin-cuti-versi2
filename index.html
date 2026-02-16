@@ -70,7 +70,7 @@ input{width:100%;padding:10px;font-size:16px}
 /* ================= CONFIG ================= */
 const SUPABASE_URL="https://ufiqibxdgwlysqhinqbz.supabase.co";
 const SUPABASE_ANON_KEY="sb_publishable_EVSVWnsUriOPA_O3RnGTpg_Zmd4pyAL";
-const GAS_URL="https://script.google.com/macros/s/AKfycbz1P8HdSejX6vIRwmQA7QSzByks9qW6s9dJIuNYFUcPnz0XHMsjrOHCBpYIBKgaIPrS/exec";
+const GAS_URL="https://script.google.com/macros/s/AKfycbx09FSw8LpRcb6V-kfKekuJIZBmWNrAD8FgWqV6uatye8ehO0xzNknYHmRZd_e39CVp/exec";
 
 const supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 
@@ -150,46 +150,58 @@ function render(){
   `;
 }
 
-/* ================= BUAT DOKUMEN (DIPERKUAT) ================= */
+/* ================= BUAT DOKUMEN (FINAL & STABIL) ================= */
 async function buatDokumen(v){
-  const d=dataList[index];
-  const akhir=d.tgl_selesai||hitungAkhir(d.tgl_mulai,d.lama_cuti,d.cuti_bersama);
+  const d = dataList[index];
+  const akhir = d.tgl_selesai || hitungAkhir(
+    d.tgl_mulai,
+    d.lama_cuti,
+    d.cuti_bersama
+  );
 
-  loading.style.display="block";
-  docLink.innerHTML="";
+  loading.style.display = "block";
+  docLink.innerHTML = "";
 
-  const p=new URLSearchParams({
-    versi:v,
-    NAMA:d.nama,
-    NIP:d.nip,
-    JABATAN:d.jabatan||"",
-    JENIS_CUTI:d.jenis_cuti,
-    LAMA_CUTI:d.lama_cuti,
-    AWAL_CUTI:d.tgl_mulai,
-    AKHIR_CUTI:akhir,
-    SISA_CUTI:d.sisa_cuti||"",
-    NOMOR_SURAT:d.nomor_surat||"",
-    ALAMAT:d.alamat,
-    HP:d.no_hp,
-    TTD:d.signature_url||""
+  const p = new URLSearchParams({
+    versi: v,
+    NAMA: d.nama,
+    NIP: d.nip,
+    JABATAN: d.jabatan || "",
+    JENIS_CUTI: d.jenis_cuti,
+    LAMA_CUTI: d.lama_cuti,
+    AWAL_CUTI: d.tgl_mulai,
+    AKHIR_CUTI: akhir,
+    SISA_CUTI: d.sisa_cuti || "",
+    NOMOR_SURAT: d.nomor_surat || "",
+    ALAMAT: d.alamat || "",
+    HP: d.no_hp || "",
+    TTD: d.signature_url || ""
   });
 
-  try{
-    const r=await fetch(GAS_URL+"?"+p.toString());
-    const j=await r.json();
+  try {
+    const r = await fetch(GAS_URL + "?" + p.toString());
+    const j = await r.json();
 
-    if(j && j.url){
-      lastDocUrl=j.url;
-      lastDocName=j.name||"Dokumen Cuti";
-      docLink.innerHTML=`📄 <a href="${lastDocUrl}" target="_blank">${lastDocName}</a>`;
-      window.open(lastDocUrl,"_blank");
-    }else{
-      alert("Dokumen dibuat, tapi link tidak diterima");
+    if (j && j.url) {
+      // 🔒 URL PASTI DITERIMA DARI GAS
+      lastDocUrl = j.url;
+      lastDocName = j.name || "Dokumen Cuti";
+
+      docLink.innerHTML =
+        `📄 <a href="${lastDocUrl}" target="_blank">${lastDocName}</a>`;
+
+      // buka otomatis
+      window.open(lastDocUrl, "_blank");
+    } else {
+      docLink.innerHTML =
+        "⚠️ Dokumen berhasil dibuat, tetapi URL tidak diterima.";
     }
-  }catch(e){
-    alert("Dokumen kemungkinan berhasil, cek Drive");
-  }finally{
-    loading.style.display="none";
+
+  } catch (err) {
+    docLink.innerHTML =
+      "⚠️ Dokumen kemungkinan berhasil dibuat. Silakan cek Drive jika perlu.";
+  } finally {
+    loading.style.display = "none";
   }
 }
 
