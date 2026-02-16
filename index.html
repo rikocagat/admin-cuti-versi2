@@ -14,13 +14,11 @@ body {
   margin: 0;
   padding: 20px;
 }
-
 h1 {
   text-align: center;
   margin-bottom: 20px;
   font-size: 26px;
 }
-
 .search-box {
   max-width: 700px;
   margin: auto;
@@ -31,7 +29,6 @@ h1 {
   padding: 12px;
   font-size: 16px;
 }
-
 .suggestions {
   position: absolute;
   background: #fff;
@@ -44,12 +41,10 @@ h1 {
 .suggestions div {
   padding: 8px;
   cursor: pointer;
-  font-size: 15px;
 }
 .suggestions div:hover {
   background: #e9ecef;
 }
-
 .card {
   background: #fff;
   max-width: 1100px;
@@ -57,40 +52,27 @@ h1 {
   padding: 24px;
   border-radius: 10px;
 }
-
 .grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 18px 40px;
 }
-
-.item {
-  font-size: 15px;
-}
-.label {
+.item .label {
   font-weight: 600;
   margin-bottom: 4px;
 }
-.value {
-  font-size: 16px;
-}
-
 input, select {
   width: 100%;
   padding: 8px;
-  font-size: 15px;
 }
-
 .actions {
-  margin-top: 25px;
+  margin-top: 20px;
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
 }
-
 .btn {
   padding: 10px 18px;
-  font-size: 15px;
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -100,8 +82,12 @@ input, select {
 .btn-nav { background: #0d6efd; }
 .btn-doc { background: #6f42c1; }
 
-a { color: #0d6efd; font-size: 15px; }
-.doc-link { margin-top: 10px; font-weight: 600; }
+.loading {
+  display: none;
+  margin-top: 10px;
+  font-weight: bold;
+  color: #6f42c1;
+}
 </style>
 </head>
 
@@ -122,29 +108,19 @@ a { color: #0d6efd; font-size: 15px; }
 </div>
 
 <script>
-/* =============================
-   KONFIGURASI SUPABASE (TIDAK DIUBAH)
-============================= */
 const SUPABASE_URL = "https://ufiqibxdgwlysqhinqbz.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_EVSVWnsUriOPA_O3RnGTpg_Zmd4pyAL";
-
-const supabaseClient = supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
-
-/* =============================
-   KONFIGURASI GAS (BARU)
-============================= */
 const GAS_URL = "https://script.google.com/macros/s/AKfycbwo6wwtU0nqbYRqD_m4eNiCBgLYS6utiSmK_tv1TRTUoz0YXaIENW7ivROQPHHbzS9B/exec";
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let dataList = [];
 let index = 0;
 
-/* =============================
-   HITUNG TGL SELESAI (TIDAK DIUBAH)
-============================= */
-function hitungTanggalSelesai(tglMulai, lamaCuti, jmlCutiBersama) {
+/* =======================
+   HITUNG TANGGAL SELESAI
+======================= */
+function hitungTanggalSelesai(tglMulai, lamaCuti, cutiBersama) {
   let tgl = new Date(tglMulai);
   let hitung = 0;
 
@@ -154,7 +130,7 @@ function hitungTanggalSelesai(tglMulai, lamaCuti, jmlCutiBersama) {
     if (hitung < lamaCuti) tgl.setDate(tgl.getDate() + 1);
   }
 
-  let tambahan = parseInt(jmlCutiBersama || 0);
+  let tambahan = parseInt(cutiBersama || 0);
   while (tambahan > 0) {
     tgl.setDate(tgl.getDate() + 1);
     const h = tgl.getDay();
@@ -164,98 +140,108 @@ function hitungTanggalSelesai(tglMulai, lamaCuti, jmlCutiBersama) {
   return tgl.toISOString().split("T")[0];
 }
 
-/* =============================
-   LOAD DATA (TIDAK DIUBAH)
-============================= */
+/* =======================
+   LOAD DATA
+======================= */
 async function loadAll() {
-  const { data, error } = await supabaseClient
+  const { data } = await supabaseClient
     .from("pengajuan_cuti")
     .select("*")
     .order("created_at", { ascending: false });
 
-  if (error) return alert(error.message);
-
-  dataList = data;
+  dataList = data || [];
   render();
   setupSearch();
 }
 
-/* =============================
-   RENDER DATA (HANYA DITAMBAH TOMBOL)
-============================= */
+/* =======================
+   RENDER
+======================= */
 function render() {
   const d = dataList[index];
   if (!d) return;
 
+  const akhirCuti = hitungTanggalSelesai(d.tgl_mulai, d.lama_cuti, d.cuti_bersama);
+
   document.getElementById("card").innerHTML = `
     <div class="grid">
-      <div class="item"><div class="label">Nama</div><div class="value">${d.nama}</div></div>
-      <div class="item"><div class="label">NIP</div><div class="value">${d.nip}</div></div>
+      <div class="item"><div class="label">Nama</div>${d.nama}</div>
+      <div class="item"><div class="label">NIP</div>${d.nip}</div>
 
-      <div class="item"><div class="label">Jabatan</div><div class="value">${d.jabatan || "-"}</div></div>
-      <div class="item"><div class="label">No HP</div><div class="value">${d.no_hp}</div></div>
+      <div class="item"><div class="label">Jabatan</div>${d.jabatan || "-"}</div>
+      <div class="item"><div class="label">No HP</div>${d.no_hp}</div>
 
-      <div class="item"><div class="label">Jenis Cuti</div><div class="value">${d.jenis_cuti}</div></div>
-      <div class="item"><div class="label">Tanggal Mulai</div><div class="value">${d.tgl_mulai}</div></div>
+      <div class="item"><div class="label">Jenis Cuti</div>${d.jenis_cuti}</div>
+      <div class="item"><div class="label">Alamat</div>${d.alamat}</div>
 
-      <div class="item"><div class="label">Lama Cuti</div><div class="value">${d.lama_cuti}</div></div>
-      <div class="item"><div class="label">Alamat</div><div class="value">${d.alamat}</div></div>
+      <div class="item">
+        <div class="label">Cuti Bersama (hari)</div>
+        <input type="number" id="cutiBersama" value="${d.cuti_bersama || 0}">
+      </div>
+
+      <div class="item">
+        <div class="label">Sisa Cuti</div>
+        <input type="number" id="sisaCuti" placeholder="Isi sisa cuti">
+      </div>
+
+      <div class="item">
+        <div class="label">Akhir Cuti</div>
+        <b id="akhirCuti">${akhirCuti}</b>
+      </div>
     </div>
 
     <div class="actions">
-      <button class="btn btn-save" onclick="save()">Simpan Perubahan</button>
-      <button class="btn btn-doc" onclick="buatDokumen(1)">Buat Dokumen (Versi 1)</button>
-      <button class="btn btn-doc" onclick="buatDokumen(2)">Buat Dokumen (Versi 2)</button>
+      <button class="btn btn-save" onclick="simpanPerubahan()">Simpan</button>
+      <button class="btn btn-doc" onclick="buatDokumen(1)">Buat Dokumen V1</button>
+      <button class="btn btn-doc" onclick="buatDokumen(2)">Buat Dokumen V2</button>
     </div>
 
-    <div class="doc-link" id="docLink"></div>
+    <div class="loading" id="loading">⏳ Sedang membuat dokumen...</div>
+    <div id="docLink"></div>
   `;
 }
 
-/* =============================
-   SAVE (TIDAK DIUBAH)
-============================= */
-async function save() {
+/* =======================
+   SIMPAN CUTI BERSAMA
+======================= */
+async function simpanPerubahan() {
   const d = dataList[index];
-  const status = document.getElementById("status")?.value || d.status;
-  const cb = d.cuti_bersama || 0;
+  const cb = parseInt(document.getElementById("cutiBersama").value || 0);
+  const akhir = hitungTanggalSelesai(d.tgl_mulai, d.lama_cuti, cb);
 
-  const tglSelesai = hitungTanggalSelesai(
-    d.tgl_mulai,
-    d.lama_cuti,
-    cb
-  );
-
-  const { error } = await supabaseClient
+  await supabaseClient
     .from("pengajuan_cuti")
-    .update({
-      status: status,
-      tgl_selesai: tglSelesai
-    })
+    .update({ cuti_bersama: cb, tgl_selesai: akhir })
     .eq("id", d.id);
 
-  if (error) return alert(error.message);
-
-  d.tgl_selesai = tglSelesai;
-  alert("Data berhasil diperbarui");
+  d.cuti_bersama = cb;
+  d.tgl_selesai = akhir;
+  document.getElementById("akhirCuti").innerText = akhir;
+  alert("Perubahan disimpan");
 }
 
-/* =============================
-   FITUR BARU: BUAT DOKUMEN
-============================= */
+/* =======================
+   BUAT DOKUMEN + LOADING
+======================= */
 async function buatDokumen(versi) {
   const d = dataList[index];
+  const sisa = document.getElementById("sisaCuti").value || "";
+  const cb = document.getElementById("cutiBersama").value || 0;
+  const akhir = hitungTanggalSelesai(d.tgl_mulai, d.lama_cuti, cb);
+
+  document.getElementById("loading").style.display = "block";
+  document.getElementById("docLink").innerHTML = "";
 
   const params = new URLSearchParams({
-    versi: versi,
+    versi,
     NAMA: d.nama,
     NIP: d.nip,
     JABATAN: d.jabatan || "",
     JENIS_CUTI: d.jenis_cuti,
     LAMA_CUTI: d.lama_cuti,
     AWAL_CUTI: d.tgl_mulai,
-    AKHIR_CUTI: d.tgl_selesai,
-    SISA_CUTI: "",
+    AKHIR_CUTI: akhir,
+    SISA_CUTI: sisa,
     ALAMAT: d.alamat,
     HP: d.no_hp,
     TTD: d.signature_url
@@ -264,59 +250,36 @@ async function buatDokumen(versi) {
   const res = await fetch(GAS_URL + "?" + params.toString());
   const json = await res.json();
 
+  document.getElementById("loading").style.display = "none";
+
   if (json.success) {
     document.getElementById("docLink").innerHTML =
-      `Dokumen berhasil dibuat: <a href="${json.url}" target="_blank">${json.name}</a>`;
+      `📄 Dokumen jadi: <a href="${json.url}" target="_blank">${json.name}</a>`;
   } else {
     alert("Gagal membuat dokumen");
   }
 }
 
-/* =============================
-   NAVIGASI & SEARCH (TIDAK DIUBAH)
-============================= */
-function nextData() {
-  if (index < dataList.length - 1) {
-    index++;
-    render();
-  }
-}
-function prevData() {
-  if (index > 0) {
-    index--;
-    render();
-  }
-}
+/* =======================
+   NAVIGASI & SEARCH
+======================= */
+function nextData(){ if(index < dataList.length-1){ index++; render(); } }
+function prevData(){ if(index > 0){ index--; render(); } }
 
-function setupSearch() {
-  const input = document.getElementById("search");
-  const sug = document.getElementById("suggestions");
-
-  input.addEventListener("input", () => {
-    const val = input.value.toLowerCase();
-    sug.innerHTML = "";
-    if (!val) return;
-
-    dataList
-      .filter(d => d.nama.toLowerCase().includes(val))
-      .slice(0, 7)
-      .forEach(d => {
-        const div = document.createElement("div");
-        div.textContent = d.nama;
-        div.onclick = () => {
-          index = dataList.findIndex(x => x.id === d.id);
-          input.value = d.nama;
-          sug.innerHTML = "";
-          render();
-        };
-        sug.appendChild(div);
-      });
+function setupSearch(){
+  const i=document.getElementById("search"), s=document.getElementById("suggestions");
+  i.addEventListener("input",()=>{
+    s.innerHTML="";
+    dataList.filter(d=>d.nama.toLowerCase().includes(i.value.toLowerCase()))
+    .slice(0,7).forEach(d=>{
+      const div=document.createElement("div");
+      div.textContent=d.nama;
+      div.onclick=()=>{ index=dataList.findIndex(x=>x.id===d.id); render(); s.innerHTML=""; };
+      s.appendChild(div);
+    });
   });
 }
 
-/* =============================
-   INIT
-============================= */
 loadAll();
 </script>
 
