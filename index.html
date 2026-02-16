@@ -63,22 +63,12 @@ a { color: #0d6efd; }
 <table>
 <thead>
 <tr>
-  <th>ID</th>
-  <th>Created At</th>
   <th>Nama</th>
-  <th>NIP</th>
-  <th>No HP</th>
-  <th>Jenis Cuti</th>
   <th>Tgl Mulai</th>
   <th>Lama Cuti</th>
-  <th>Alamat</th>
-  <th>File 1</th>
-  <th>File 2</th>
-  <th>Signature</th>
-  <th>Status</th>
-  <th>Nomor Surat</th>
   <th>Cuti Bersama</th>
   <th>Tgl Selesai</th>
+  <th>Status</th>
   <th>Aksi</th>
 </tr>
 </thead>
@@ -88,16 +78,43 @@ a { color: #0d6efd; }
 
 <script>
 /* =============================
-   KONFIGURASI SUPABASE (BENAR)
+   KONFIGURASI SUPABASE
 ============================= */
 const SUPABASE_URL = "https://ufiqibxdgwlysqhinqbz.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_EVSVWnsUriOPA_O3RnGTpg_Zmd4pyAL";
 
-/* ❗ INI YANG BENAR */
 const supabaseClient = supabase.createClient(
   SUPABASE_URL,
   SUPABASE_ANON_KEY
 );
+
+/* =============================
+   FUNGSI HITUNG TANGGAL SELESAI
+============================= */
+function hitungTanggalSelesai(tglMulai, lamaCuti, cutiBersama) {
+  let tanggal = new Date(tglMulai);
+  let hariTerhitung = 0;
+
+  while (hariTerhitung < lamaCuti) {
+    const day = tanggal.getDay();
+
+    if (day !== 0 && day !== 6) {
+      hariTerhitung++;
+    }
+    if (hariTerhitung < lamaCuti) {
+      tanggal.setDate(tanggal.getDate() + 1);
+    }
+  }
+
+  if (cutiBersama === 1) {
+    tanggal.setDate(tanggal.getDate() + 1);
+  }
+
+  const yyyy = tanggal.getFullYear();
+  const mm = String(tanggal.getMonth() + 1).padStart(2, '0');
+  const dd = String(tanggal.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
 
 /* =============================
    LOAD DATA
@@ -105,11 +122,11 @@ const supabaseClient = supabase.createClient(
 async function loadData() {
   const { data, error } = await supabaseClient
     .from("pengajuan_cuti")
-    .select("*")
+    .select("id,nama,tgl_mulai,lama_cuti,cuti_bersama,tgl_selesai,status")
     .order("created_at", { ascending: false });
 
   if (error) {
-    alert("ERROR LOAD DATA: " + error.message);
+    alert(error.message);
     return;
   }
 
@@ -120,19 +137,16 @@ async function loadData() {
     const tr = document.createElement("tr");
 
     tr.innerHTML = `
-      <td>${row.id}</td>
-      <td>${row.created_at || ""}</td>
-      <td>${row.nama || ""}</td>
-      <td>${row.nip || ""}</td>
-      <td>${row.no_hp || ""}</td>
-      <td>${row.jenis_cuti || ""}</td>
-      <td>${row.tgl_mulai || ""}</td>
-      <td>${row.lama_cuti || ""}</td>
-      <td>${row.alamat || ""}</td>
-      <td>${row.file_1_url ? `<a href="${row.file_1_url}" target="_blank">Lihat</a>` : "-"}</td>
-      <td>${row.file_2_url ? `<a href="${row.file_2_url}" target="_blank">Lihat</a>` : "-"}</td>
-      <td>${row.signature_url ? `<a href="${row.signature_url}" target="_blank">Lihat</a>` : "-"}</td>
-
+      <td>${row.nama}</td>
+      <td>${row.tgl_mulai}</td>
+      <td>${row.lama_cuti}</td>
+      <td>
+        <select id="cb_${row.id}">
+          <option value="0" ${row.cuti_bersama == 0 ? "selected" : ""}>Tidak</option>
+          <option value="1" ${row.cuti_bersama == 1 ? "selected" : ""}>Ya</option>
+        </select>
+      </td>
+      <td id="tgl_${row.id}">${row.tgl_selesai || "-"}</td>
       <td>
         <select id="status_${row.id}">
           <option ${row.status === "Diajukan" ? "selected" : ""}>Diajukan</option>
@@ -140,23 +154,8 @@ async function loadData() {
           <option ${row.status === "Ditolak" ? "selected" : ""}>Ditolak</option>
         </select>
       </td>
-
-      <td>${row.nomor_surat || ""}</td>
-
       <td>
-        <select id="cb_${row.id}">
-          <option value="0" ${row.cuti_bersama == 0 ? "selected" : ""}>Tidak</option>
-          <option value="1" ${row.cuti_bersama == 1 ? "selected" : ""}>Ya</option>
-        </select>
-      </td>
-
-      <td>
-        <input type="date" id="tgl_${row.id}" value="${row.tgl_selesai || ""}">
-      </td>
-
-      <td>
-        <button class="btn-save" onclick="updateRow('${row.id}')">Simpan</button>
-        <button class="btn-delete" onclick='deleteRow(${JSON.stringify(row)})'>Hapus</button>
+        <button class="btn-save" onclick="updateRow('${row.id}','${row.tgl_mulai}',${row.lama_cuti})">Simpan</button>
       </td>
     `;
 
@@ -165,49 +164,32 @@ async function loadData() {
 }
 
 /* =============================
-   UPDATE
+   UPDATE DATA
 ============================= */
-async function updateRow(id) {
+async function updateRow(id, tglMulai, lamaCuti) {
   const status = document.getElementById("status_" + id).value;
-  const cuti_bersama = parseInt(document.getElementById("cb_" + id).value);
-  const tgl_selesai = document.getElementById("tgl_" + id).value;
+  const cutiBersama = parseInt(document.getElementById("cb_" + id).value);
+
+  const tglSelesai = hitungTanggalSelesai(
+    tglMulai,
+    lamaCuti,
+    cutiBersama
+  );
 
   const { error } = await supabaseClient
     .from("pengajuan_cuti")
-    .update({ status, cuti_bersama, tgl_selesai })
+    .update({
+      status: status,
+      cuti_bersama: cutiBersama,
+      tgl_selesai: tglSelesai
+    })
     .eq("id", id);
 
-  if (error) alert(error.message);
-  else alert("Data berhasil diperbarui");
-}
-
-/* =============================
-   DELETE
-============================= */
-async function deleteRow(row) {
-  if (!confirm("Yakin hapus data ini beserta file?")) return;
-
-  await deleteFile(row.file_1_url, "cuti-pdf");
-  await deleteFile(row.file_2_url, "cuti-pdf");
-  await deleteFile(row.signature_url, "cuti-signature");
-
-  const { error } = await supabaseClient
-    .from("pengajuan_cuti")
-    .delete()
-    .eq("id", row.id);
-
-  if (error) alert(error.message);
-  else {
-    alert("Data berhasil dihapus");
-    loadData();
-  }
-}
-
-async function deleteFile(url, bucket) {
-  if (!url) return;
-  const path = url.split("/" + bucket + "/")[1];
-  if (path) {
-    await supabaseClient.storage.from(bucket).remove([path]);
+  if (error) {
+    alert(error.message);
+  } else {
+    document.getElementById("tgl_" + id).innerText = tglSelesai;
+    alert("Data berhasil diperbarui");
   }
 }
 
