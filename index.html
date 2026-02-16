@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>DASBOARD ADMIN CUTI</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f6f8;
+  margin: 0;
+  padding: 15px;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  font-size: 13px;
+  text-align: center;
+}
+
+th {
+  background: #0d6efd;
+  color: white;
+}
+
+td input, td select {
+  width: 100%;
+  padding: 4px;
+  font-size: 13px;
+}
+
+.btn {
+  padding: 5px 10px;
+  cursor: pointer;
+  border: none;
+  color: white;
+  border-radius: 4px;
+}
+
+.btn-save {
+  background: #198754;
+}
+
+.btn-delete {
+  background: #dc3545;
+}
+</style>
+</head>
+
+<body>
+
+<h1>DASBOARD ADMIN CUTI</h1>
+
+<table id="cutiTable">
+<thead>
+<tr>
+  <th>Nama</th>
+  <th>NIP</th>
+  <th>Jenis Cuti</th>
+  <th>Tgl Mulai</th>
+  <th>Lama</th>
+  <th>Tgl Selesai</th>
+  <th>Cuti Bersama</th>
+  <th>Status</th>
+  <th>Aksi</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+
+<script>
+const SUPABASE_URL = "https://ufiqibxdgwlysqhinqbz.supabase.co";
+const SUPABASE_KEY = "sb_publishable_EVSVWnsUriOPA_O3RnGTpg_Zmd4pyAL";
+
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+loadData();
+
+async function loadData() {
+  const { data, error } = await supabase
+    .from('pengajuan_cuti')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  const tbody = document.querySelector("#cutiTable tbody");
+  tbody.innerHTML = "";
+
+  data.forEach(row => {
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${row.nama}</td>
+      <td>${row.nip}</td>
+      <td>${row.jenis_cuti}</td>
+      <td>${row.tgl_mulai}</td>
+      <td>${row.lama_cuti}</td>
+      <td>
+        <input type="date" value="${row.tgl_selesai || ''}" id="tgl_${row.id}">
+      </td>
+      <td>
+        <select id="cb_${row.id}">
+          <option value="0" ${row.cuti_bersama == 0 ? 'selected' : ''}>Tidak</option>
+          <option value="1" ${row.cuti_bersama == 1 ? 'selected' : ''}>Ya</option>
+        </select>
+      </td>
+      <td>
+        <select id="status_${row.id}">
+          <option ${row.status == 'Diajukan' ? 'selected' : ''}>Diajukan</option>
+          <option ${row.status == 'Disetujui' ? 'selected' : ''}>Disetujui</option>
+          <option ${row.status == 'Ditolak' ? 'selected' : ''}>Ditolak</option>
+        </select>
+      </td>
+      <td>
+        <button class="btn btn-save" onclick="updateData('${row.id}')">Simpan</button>
+        <button class="btn btn-delete" onclick='deleteData(${JSON.stringify(row)})'>Hapus</button>
+      </td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
+
+async function updateData(id) {
+  const status = document.getElementById(`status_${id}`).value;
+  const cuti_bersama = document.getElementById(`cb_${id}`).value;
+  const tgl_selesai = document.getElementById(`tgl_${id}`).value;
+
+  const { error } = await supabase
+    .from('pengajuan_cuti')
+    .update({
+      status,
+      cuti_bersama,
+      tgl_selesai
+    })
+    .eq('id', id);
+
+  if (error) {
+    alert("Gagal update: " + error.message);
+  } else {
+    alert("Data berhasil diperbarui");
+  }
+}
+
+async function deleteData(row) {
+  if (!confirm("Yakin hapus data ini beserta file-nya?")) return;
+
+  await deleteFileByUrl(row.file_1_url, 'cuti-pdf');
+  await deleteFileByUrl(row.file_2_url, 'cuti-pdf');
+  await deleteFileByUrl(row.signature_url, 'cuti-signature');
+
+  const { error } = await supabase
+    .from('pengajuan_cuti')
+    .delete()
+    .eq('id', row.id);
+
+  if (error) {
+    alert("Gagal hapus: " + error.message);
+  } else {
+    alert("Data & file berhasil dihapus");
+    loadData();
+  }
+}
+
+async function deleteFileByUrl(url, bucket) {
+  if (!url) return;
+
+  const path = url.split(`/${bucket}/`)[1];
+  if (!path) return;
+
+  await supabase.storage.from(bucket).remove([path]);
+}
+</script>
+
+</body>
+</html>
