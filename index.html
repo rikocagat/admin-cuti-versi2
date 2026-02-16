@@ -88,40 +88,24 @@ a { color: #0d6efd; }
 
 <script>
 /* =============================
-   KONFIGURASI SUPABASE
+   KONFIGURASI SUPABASE (BENAR)
 ============================= */
 const SUPABASE_URL = "https://ufiqibxdgwlysqhinqbz.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_EVSVWnsUriOPA_O3RnGTpg_Zmd4pyAL";
 
-const supabase = window.supabase.createClient(
+/* ❗ INI YANG BENAR */
+const supabaseClient = supabase.createClient(
   SUPABASE_URL,
   SUPABASE_ANON_KEY
 );
 
 /* =============================
-   LOAD DATA (SEMUA KOLOM)
+   LOAD DATA
 ============================= */
 async function loadData() {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from("pengajuan_cuti")
-    .select(`
-      id,
-      created_at,
-      nama,
-      nip,
-      no_hp,
-      jenis_cuti,
-      tgl_mulai,
-      lama_cuti,
-      alamat,
-      file_1_url,
-      file_2_url,
-      signature_url,
-      status,
-      nomor_surat,
-      cuti_bersama,
-      tgl_selesai
-    `)
+    .select("*")
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -145,7 +129,6 @@ async function loadData() {
       <td>${row.tgl_mulai || ""}</td>
       <td>${row.lama_cuti || ""}</td>
       <td>${row.alamat || ""}</td>
-
       <td>${row.file_1_url ? `<a href="${row.file_1_url}" target="_blank">Lihat</a>` : "-"}</td>
       <td>${row.file_2_url ? `<a href="${row.file_2_url}" target="_blank">Lihat</a>` : "-"}</td>
       <td>${row.signature_url ? `<a href="${row.signature_url}" target="_blank">Lihat</a>` : "-"}</td>
@@ -182,61 +165,50 @@ async function loadData() {
 }
 
 /* =============================
-   UPDATE DATA (3 KOLOM SAJA)
+   UPDATE
 ============================= */
 async function updateRow(id) {
   const status = document.getElementById("status_" + id).value;
   const cuti_bersama = parseInt(document.getElementById("cb_" + id).value);
   const tgl_selesai = document.getElementById("tgl_" + id).value;
 
-  const { error } = await supabase
+  const { error } = await supabaseClient
     .from("pengajuan_cuti")
-    .update({
-      status: status,
-      cuti_bersama: cuti_bersama,
-      tgl_selesai: tgl_selesai
-    })
+    .update({ status, cuti_bersama, tgl_selesai })
     .eq("id", id);
 
-  if (error) {
-    alert("GAGAL UPDATE: " + error.message);
-  } else {
-    alert("Data berhasil diperbarui");
-  }
+  if (error) alert(error.message);
+  else alert("Data berhasil diperbarui");
 }
 
 /* =============================
-   HAPUS DATA + STORAGE
+   DELETE
 ============================= */
 async function deleteRow(row) {
-  if (!confirm("Yakin hapus data ini beserta file di storage?")) return;
+  if (!confirm("Yakin hapus data ini beserta file?")) return;
 
   await deleteFile(row.file_1_url, "cuti-pdf");
   await deleteFile(row.file_2_url, "cuti-pdf");
   await deleteFile(row.signature_url, "cuti-signature");
 
-  const { error } = await supabase
+  const { error } = await supabaseClient
     .from("pengajuan_cuti")
     .delete()
     .eq("id", row.id);
 
-  if (error) {
-    alert("GAGAL HAPUS: " + error.message);
-  } else {
-    alert("Data & file berhasil dihapus");
+  if (error) alert(error.message);
+  else {
+    alert("Data berhasil dihapus");
     loadData();
   }
 }
 
-/* =============================
-   HAPUS FILE STORAGE
-============================= */
 async function deleteFile(url, bucket) {
   if (!url) return;
   const path = url.split("/" + bucket + "/")[1];
-  if (!path) return;
-
-  await supabase.storage.from(bucket).remove([path]);
+  if (path) {
+    await supabaseClient.storage.from(bucket).remove([path]);
+  }
 }
 
 /* =============================
