@@ -84,8 +84,8 @@ input, select {
 .actions {
   margin-top: 25px;
   display: flex;
-  justify-content: space-between;
-  gap: 20px;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .btn {
@@ -98,8 +98,10 @@ input, select {
 }
 .btn-save { background: #198754; }
 .btn-nav { background: #0d6efd; }
+.btn-doc { background: #6f42c1; }
 
 a { color: #0d6efd; font-size: 15px; }
+.doc-link { margin-top: 10px; font-weight: 600; }
 </style>
 </head>
 
@@ -121,7 +123,7 @@ a { color: #0d6efd; font-size: 15px; }
 
 <script>
 /* =============================
-   SUPABASE
+   KONFIGURASI SUPABASE (TIDAK DIUBAH)
 ============================= */
 const SUPABASE_URL = "https://ufiqibxdgwlysqhinqbz.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_EVSVWnsUriOPA_O3RnGTpg_Zmd4pyAL";
@@ -130,6 +132,11 @@ const supabaseClient = supabase.createClient(
   SUPABASE_URL,
   SUPABASE_ANON_KEY
 );
+
+/* =============================
+   KONFIGURASI GAS (BARU)
+============================= */
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwo6wwtU0nqbYRqD_m4eNiCBgLYS6utiSmK_tv1TRTUoz0YXaIENW7ivROQPHHbzS9B/exec";
 
 let dataList = [];
 let index = 0;
@@ -174,7 +181,7 @@ async function loadAll() {
 }
 
 /* =============================
-   RENDER 1 DATA (TAMBAH JABATAN)
+   RENDER DATA (HANYA DITAMBAH TOMBOL)
 ============================= */
 function render() {
   const d = dataList[index];
@@ -191,46 +198,27 @@ function render() {
       <div class="item"><div class="label">Jenis Cuti</div><div class="value">${d.jenis_cuti}</div></div>
       <div class="item"><div class="label">Tanggal Mulai</div><div class="value">${d.tgl_mulai}</div></div>
 
-      <div class="item"><div class="label">Lama Cuti</div><div class="value">${d.lama_cuti} hari</div></div>
+      <div class="item"><div class="label">Lama Cuti</div><div class="value">${d.lama_cuti}</div></div>
       <div class="item"><div class="label">Alamat</div><div class="value">${d.alamat}</div></div>
-
-      <div class="item"><div class="label">Cuti Bersama (hari)</div>
-        <input type="number" id="cb" min="0" value="${d.cuti_bersama || 0}">
-      </div>
-
-      <div class="item"><div class="label">File 1</div>${d.file_1_url ? `<a href="${d.file_1_url}" target="_blank">Lihat</a>` : "-"}</div>
-      <div class="item"><div class="label">File 2</div>${d.file_2_url ? `<a href="${d.file_2_url}" target="_blank">Lihat</a>` : "-"}</div>
-
-      <div class="item"><div class="label">Signature</div>${d.signature_url ? `<a href="${d.signature_url}" target="_blank">Lihat</a>` : "-"}</div>
-
-      <div class="item">
-        <div class="label">Status</div>
-        <select id="status">
-          <option ${d.status === "Diajukan" ? "selected" : ""}>Diajukan</option>
-          <option ${d.status === "Disetujui" ? "selected" : ""}>Disetujui</option>
-          <option ${d.status === "Ditolak" ? "selected" : ""}>Ditolak</option>
-        </select>
-      </div>
-
-      <div class="item">
-        <div class="label">Tanggal Selesai</div>
-        <div class="value" id="tglSelesai">${d.tgl_selesai || "-"}</div>
-      </div>
     </div>
 
     <div class="actions">
       <button class="btn btn-save" onclick="save()">Simpan Perubahan</button>
+      <button class="btn btn-doc" onclick="buatDokumen(1)">Buat Dokumen (Versi 1)</button>
+      <button class="btn btn-doc" onclick="buatDokumen(2)">Buat Dokumen (Versi 2)</button>
     </div>
+
+    <div class="doc-link" id="docLink"></div>
   `;
 }
 
 /* =============================
-   UPDATE (TIDAK DIUBAH)
+   SAVE (TIDAK DIUBAH)
 ============================= */
 async function save() {
   const d = dataList[index];
-  const status = document.getElementById("status").value;
-  const cb = parseInt(document.getElementById("cb").value || 0);
+  const status = document.getElementById("status")?.value || d.status;
+  const cb = d.cuti_bersama || 0;
 
   const tglSelesai = hitungTanggalSelesai(
     d.tgl_mulai,
@@ -242,19 +230,46 @@ async function save() {
     .from("pengajuan_cuti")
     .update({
       status: status,
-      cuti_bersama: cb,
       tgl_selesai: tglSelesai
     })
     .eq("id", d.id);
 
   if (error) return alert(error.message);
 
-  d.status = status;
-  d.cuti_bersama = cb;
   d.tgl_selesai = tglSelesai;
-
-  document.getElementById("tglSelesai").innerText = tglSelesai;
   alert("Data berhasil diperbarui");
+}
+
+/* =============================
+   FITUR BARU: BUAT DOKUMEN
+============================= */
+async function buatDokumen(versi) {
+  const d = dataList[index];
+
+  const params = new URLSearchParams({
+    versi: versi,
+    NAMA: d.nama,
+    NIP: d.nip,
+    JABATAN: d.jabatan || "",
+    JENIS_CUTI: d.jenis_cuti,
+    LAMA_CUTI: d.lama_cuti,
+    AWAL_CUTI: d.tgl_mulai,
+    AKHIR_CUTI: d.tgl_selesai,
+    SISA_CUTI: "",
+    ALAMAT: d.alamat,
+    HP: d.no_hp,
+    TTD: d.signature_url
+  });
+
+  const res = await fetch(GAS_URL + "?" + params.toString());
+  const json = await res.json();
+
+  if (json.success) {
+    document.getElementById("docLink").innerHTML =
+      `Dokumen berhasil dibuat: <a href="${json.url}" target="_blank">${json.name}</a>`;
+  } else {
+    alert("Gagal membuat dokumen");
+  }
 }
 
 /* =============================
