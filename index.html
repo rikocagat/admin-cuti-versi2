@@ -12,7 +12,6 @@ body{
   font-family:"Segoe UI",Arial,sans-serif;
   background:#eef1f5;
   margin:0;
-  padding:0;
 }
 header{
   display:flex;
@@ -39,9 +38,8 @@ header .left{
   text-decoration:none;
   font-weight:600;
 }
-main{
-  padding:20px;
-}
+main{padding:20px;}
+
 .search-box{
   max-width:700px;
   margin:0 auto 15px auto;
@@ -80,16 +78,32 @@ main{
   gap:18px 40px;
 }
 .label{font-weight:600;margin-bottom:4px;}
-input,select{
+input{
   width:100%;
   padding:8px;
   font-size:15px;
 }
+
+.files{
+  margin-top:20px;
+  padding-top:15px;
+  border-top:1px solid #ddd;
+}
+.files-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:20px;
+}
+.files a{
+  color:#0d6efd;
+  font-weight:600;
+}
+
 .actions{
   margin-top:20px;
   display:flex;
-  flex-wrap:wrap;
   gap:12px;
+  flex-wrap:wrap;
 }
 .btn{
   padding:10px 18px;
@@ -183,42 +197,61 @@ async function loadAll(){
 function render(){
   const d=dataList[index];
   if(!d)return;
+
   const akhir=hitungAkhir(d.tgl_mulai,d.lama_cuti,d.cuti_bersama);
 
   document.getElementById("card").innerHTML=`
-  <div class="grid">
-    <div><div class="label">Nama</div>${d.nama}</div>
-    <div><div class="label">NIP</div>${d.nip}</div>
+    <div class="grid">
+      <div><div class="label">Nama</div>${d.nama}</div>
+      <div><div class="label">NIP</div>${d.nip}</div>
 
-    <div><div class="label">Jabatan</div>${d.jabatan||"-"}</div>
-    <div><div class="label">No HP</div>${d.no_hp}</div>
+      <div><div class="label">Jabatan</div>${d.jabatan||"-"}</div>
+      <div><div class="label">No HP</div>${d.no_hp}</div>
 
-    <div><div class="label">Jenis Cuti</div>${d.jenis_cuti}</div>
-    <div><div class="label">Alamat</div>${d.alamat}</div>
+      <div><div class="label">Jenis Cuti</div>${d.jenis_cuti}</div>
+      <div><div class="label">Alamat</div>${d.alamat}</div>
 
-    <div>
-      <div class="label">Cuti Bersama (hari)</div>
-      <input type="number" id="cb" value="${d.cuti_bersama||0}">
+      <div>
+        <div class="label">Cuti Bersama (hari)</div>
+        <input type="number" id="cb" value="${d.cuti_bersama||0}">
+      </div>
+      <div>
+        <div class="label">Sisa Cuti</div>
+        <input type="number" id="sisa">
+      </div>
+
+      <div>
+        <div class="label">Akhir Cuti</div>
+        <b id="akhir">${akhir}</b>
+      </div>
     </div>
-    <div>
-      <div class="label">Sisa Cuti</div>
-      <input type="number" id="sisa">
+
+    <div class="files">
+      <div class="label">Berkas & Tanda Tangan</div>
+      <div class="files-grid">
+        <div>
+          <div class="label">Persyaratan 1</div>
+          ${d.file_1_url ? `<a href="${d.file_1_url}" target="_blank">Lihat Berkas</a>` : "-"}
+        </div>
+        <div>
+          <div class="label">Persyaratan 2</div>
+          ${d.file_2_url ? `<a href="${d.file_2_url}" target="_blank">Lihat Berkas</a>` : "-"}
+        </div>
+        <div>
+          <div class="label">TTD</div>
+          ${d.signature_url ? `<a href="${d.signature_url}" target="_blank">Lihat TTD</a>` : "-"}
+        </div>
+      </div>
     </div>
 
-    <div>
-      <div class="label">Akhir Cuti</div>
-      <b id="akhir">${akhir}</b>
+    <div class="actions">
+      <button class="btn btn-save" onclick="simpan()">Simpan</button>
+      <button class="btn btn-doc" onclick="buatDokumen(1)">Buat Dokumen V1</button>
+      <button class="btn btn-doc" onclick="buatDokumen(2)">Buat Dokumen V2</button>
     </div>
-  </div>
 
-  <div class="actions">
-    <button class="btn btn-save" onclick="simpan()">Simpan</button>
-    <button class="btn btn-doc" onclick="buatDokumen(1)">Buat Dokumen V1</button>
-    <button class="btn btn-doc" onclick="buatDokumen(2)">Buat Dokumen V2</button>
-  </div>
-
-  <div class="loading" id="loading">⏳ Membuat dokumen...</div>
-  <div class="doc-link" id="docLink"></div>
+    <div class="loading" id="loading">⏳ Membuat dokumen...</div>
+    <div class="doc-link" id="docLink"></div>
   `;
 }
 
