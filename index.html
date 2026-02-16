@@ -10,23 +10,28 @@
 <style>
 body {
   font-family: Arial, sans-serif;
-  background: #f2f4f7;
+  background: #f3f5f8;
   margin: 0;
-  padding: 16px;
+  padding: 14px;
 }
 h1 {
   text-align: center;
   margin-bottom: 20px;
 }
+.table-wrapper {
+  overflow-x: auto;
+  background: #fff;
+}
 table {
   width: 100%;
   border-collapse: collapse;
-  background: #fff;
+  min-width: 1800px;
 }
 th, td {
   border: 1px solid #ddd;
-  padding: 8px;
-  font-size: 13px;
+  padding: 6px;
+  font-size: 12px;
+  white-space: nowrap;
   text-align: center;
 }
 th {
@@ -34,19 +39,19 @@ th {
   color: #fff;
 }
 input, select {
-  width: 100%;
+  font-size: 12px;
   padding: 4px;
-  font-size: 13px;
 }
 button {
-  padding: 6px 10px;
+  padding: 5px 8px;
   border: none;
   border-radius: 4px;
-  cursor: pointer;
   color: #fff;
+  cursor: pointer;
 }
 .btn-save { background: #198754; }
 .btn-delete { background: #dc3545; }
+a { color: #0d6efd; }
 </style>
 </head>
 
@@ -54,27 +59,37 @@ button {
 
 <h1>DASBOARD ADMIN CUTI</h1>
 
+<div class="table-wrapper">
 <table>
 <thead>
 <tr>
+  <th>ID</th>
+  <th>Created At</th>
   <th>Nama</th>
   <th>NIP</th>
+  <th>No HP</th>
   <th>Jenis Cuti</th>
   <th>Tgl Mulai</th>
-  <th>Lama</th>
-  <th>Tgl Selesai</th>
-  <th>Cuti Bersama</th>
+  <th>Lama Cuti</th>
+  <th>Alamat</th>
+  <th>File 1</th>
+  <th>File 2</th>
+  <th>Signature</th>
   <th>Status</th>
+  <th>Nomor Surat</th>
+  <th>Cuti Bersama</th>
+  <th>Tgl Selesai</th>
   <th>Aksi</th>
 </tr>
 </thead>
 <tbody id="tbody"></tbody>
 </table>
+</div>
 
 <script>
-/* =======================
+/* =============================
    KONFIGURASI SUPABASE
-======================= */
+============================= */
 const SUPABASE_URL = "https://ufiqibxdgwlysqhinqbz.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_EVSVWnsUriOPA_O3RnGTpg_Zmd4pyAL";
 
@@ -83,13 +98,30 @@ const supabase = window.supabase.createClient(
   SUPABASE_ANON_KEY
 );
 
-/* =======================
-   LOAD DATA
-======================= */
+/* =============================
+   LOAD DATA (SEMUA KOLOM)
+============================= */
 async function loadData() {
   const { data, error } = await supabase
     .from("pengajuan_cuti")
-    .select("*")
+    .select(`
+      id,
+      created_at,
+      nama,
+      nip,
+      no_hp,
+      jenis_cuti,
+      tgl_mulai,
+      lama_cuti,
+      alamat,
+      file_1_url,
+      file_2_url,
+      signature_url,
+      status,
+      nomor_surat,
+      cuti_bersama,
+      tgl_selesai
+    `)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -104,15 +136,29 @@ async function loadData() {
     const tr = document.createElement("tr");
 
     tr.innerHTML = `
+      <td>${row.id}</td>
+      <td>${row.created_at || ""}</td>
       <td>${row.nama || ""}</td>
       <td>${row.nip || ""}</td>
+      <td>${row.no_hp || ""}</td>
       <td>${row.jenis_cuti || ""}</td>
       <td>${row.tgl_mulai || ""}</td>
       <td>${row.lama_cuti || ""}</td>
+      <td>${row.alamat || ""}</td>
+
+      <td>${row.file_1_url ? `<a href="${row.file_1_url}" target="_blank">Lihat</a>` : "-"}</td>
+      <td>${row.file_2_url ? `<a href="${row.file_2_url}" target="_blank">Lihat</a>` : "-"}</td>
+      <td>${row.signature_url ? `<a href="${row.signature_url}" target="_blank">Lihat</a>` : "-"}</td>
 
       <td>
-        <input type="date" id="tgl_${row.id}" value="${row.tgl_selesai || ""}">
+        <select id="status_${row.id}">
+          <option ${row.status === "Diajukan" ? "selected" : ""}>Diajukan</option>
+          <option ${row.status === "Disetujui" ? "selected" : ""}>Disetujui</option>
+          <option ${row.status === "Ditolak" ? "selected" : ""}>Ditolak</option>
+        </select>
       </td>
+
+      <td>${row.nomor_surat || ""}</td>
 
       <td>
         <select id="cb_${row.id}">
@@ -122,11 +168,7 @@ async function loadData() {
       </td>
 
       <td>
-        <select id="status_${row.id}">
-          <option ${row.status === "Diajukan" ? "selected" : ""}>Diajukan</option>
-          <option ${row.status === "Disetujui" ? "selected" : ""}>Disetujui</option>
-          <option ${row.status === "Ditolak" ? "selected" : ""}>Ditolak</option>
-        </select>
+        <input type="date" id="tgl_${row.id}" value="${row.tgl_selesai || ""}">
       </td>
 
       <td>
@@ -139,9 +181,9 @@ async function loadData() {
   });
 }
 
-/* =======================
-   UPDATE DATA
-======================= */
+/* =============================
+   UPDATE DATA (3 KOLOM SAJA)
+============================= */
 async function updateRow(id) {
   const status = document.getElementById("status_" + id).value;
   const cuti_bersama = parseInt(document.getElementById("cb_" + id).value);
@@ -163,9 +205,9 @@ async function updateRow(id) {
   }
 }
 
-/* =======================
+/* =============================
    HAPUS DATA + STORAGE
-======================= */
+============================= */
 async function deleteRow(row) {
   if (!confirm("Yakin hapus data ini beserta file di storage?")) return;
 
@@ -186,24 +228,20 @@ async function deleteRow(row) {
   }
 }
 
-/* =======================
+/* =============================
    HAPUS FILE STORAGE
-======================= */
+============================= */
 async function deleteFile(url, bucket) {
   if (!url) return;
-
   const path = url.split("/" + bucket + "/")[1];
   if (!path) return;
 
-  await supabase
-    .storage
-    .from(bucket)
-    .remove([path]);
+  await supabase.storage.from(bucket).remove([path]);
 }
 
-/* =======================
+/* =============================
    INIT
-======================= */
+============================= */
 loadData();
 </script>
 
