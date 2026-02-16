@@ -8,92 +8,125 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-body {
-  font-family: "Segoe UI", Arial, sans-serif;
-  background: #eef1f5;
-  margin: 0;
-  padding: 20px;
+body{
+  font-family:"Segoe UI",Arial,sans-serif;
+  background:#eef1f5;
+  margin:0;
+  padding:0;
 }
-h1 {
-  text-align: center;
-  margin-bottom: 20px;
-  font-size: 26px;
+header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  background:#0d6efd;
+  color:#fff;
+  padding:14px 20px;
 }
-.search-box {
-  max-width: 700px;
-  margin: auto;
-  position: relative;
+header .left{
+  display:flex;
+  align-items:center;
+  gap:12px;
 }
-.search-box input {
-  width: 100%;
-  padding: 12px;
-  font-size: 16px;
+.hamburger{
+  font-size:22px;
+  cursor:pointer;
 }
-.suggestions {
-  position: absolute;
-  background: #fff;
-  width: 100%;
-  border: 1px solid #ccc;
-  max-height: 220px;
-  overflow-y: auto;
-  z-index: 10;
+.back-btn{
+  background:#fff;
+  color:#0d6efd;
+  padding:6px 12px;
+  border-radius:6px;
+  text-decoration:none;
+  font-weight:600;
 }
-.suggestions div {
-  padding: 8px;
-  cursor: pointer;
+main{
+  padding:20px;
 }
-.suggestions div:hover {
-  background: #e9ecef;
+.search-box{
+  max-width:700px;
+  margin:0 auto 15px auto;
+  position:relative;
 }
-.card {
-  background: #fff;
-  max-width: 1100px;
-  margin: 25px auto;
-  padding: 24px;
-  border-radius: 10px;
+.search-box input{
+  width:100%;
+  padding:12px;
+  font-size:16px;
 }
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18px 40px;
+.suggestions{
+  position:absolute;
+  background:#fff;
+  width:100%;
+  border:1px solid #ccc;
+  max-height:220px;
+  overflow-y:auto;
+  z-index:100;
 }
-.item .label {
-  font-weight: 600;
-  margin-bottom: 4px;
+.suggestions div{
+  padding:8px;
+  cursor:pointer;
 }
-input, select {
-  width: 100%;
-  padding: 8px;
-}
-.actions {
-  margin-top: 20px;
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-.btn {
-  padding: 10px 18px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  color: #fff;
-}
-.btn-save { background: #198754; }
-.btn-nav { background: #0d6efd; }
-.btn-doc { background: #6f42c1; }
+.suggestions div:hover{background:#e9ecef;}
 
-.loading {
-  display: none;
-  margin-top: 10px;
-  font-weight: bold;
-  color: #6f42c1;
+.card{
+  background:#fff;
+  max-width:1200px;
+  margin:20px auto;
+  padding:24px;
+  border-radius:10px;
+}
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:18px 40px;
+}
+.label{font-weight:600;margin-bottom:4px;}
+input,select{
+  width:100%;
+  padding:8px;
+  font-size:15px;
+}
+.actions{
+  margin-top:20px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+}
+.btn{
+  padding:10px 18px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  color:#fff;
+  font-size:15px;
+}
+.btn-save{background:#198754;}
+.btn-doc{background:#6f42c1;}
+.btn-nav{background:#0d6efd;}
+
+.loading{
+  display:none;
+  margin-top:10px;
+  font-weight:bold;
+  color:#6f42c1;
+}
+.doc-link{
+  margin-top:10px;
+  font-weight:600;
 }
 </style>
 </head>
 
 <body>
 
-<h1>DASBOARD ADMIN CUTI</h1>
+<header>
+  <div class="left">
+    <span class="hamburger">☰</span>
+    <a class="back-btn" href="https://rikoantah.github.io/Dasboard-Kepegawaian/">← Back</a>
+  </div>
+  <h2>DASBOARD ADMIN CUTI</h2>
+</header>
+
+<main>
 
 <div class="search-box">
   <input type="text" id="search" placeholder="Cari nama pegawai...">
@@ -102,179 +135,162 @@ input, select {
 
 <div class="card" id="card"></div>
 
-<div class="actions" style="max-width:1100px;margin:auto;">
+<div class="actions" style="justify-content:center">
   <button class="btn btn-nav" onclick="prevData()">◀ Sebelumnya</button>
   <button class="btn btn-nav" onclick="nextData()">Berikutnya ▶</button>
 </div>
 
+</main>
+
 <script>
-const SUPABASE_URL = "https://ufiqibxdgwlysqhinqbz.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_EVSVWnsUriOPA_O3RnGTpg_Zmd4pyAL";
-const GAS_URL = "https://script.google.com/macros/s/AKfycbwo6wwtU0nqbYRqD_m4eNiCBgLYS6utiSmK_tv1TRTUoz0YXaIENW7ivROQPHHbzS9B/exec";
+const SUPABASE_URL="https://ufiqibxdgwlysqhinqbz.supabase.co";
+const SUPABASE_ANON_KEY="sb_publishable_EVSVWnsUriOPA_O3RnGTpg_Zmd4pyAL";
+const GAS_URL="https://script.google.com/macros/s/AKfycbwo6wwtU0nqbYRqD_m4eNiCBgLYS6utiSmK_tv1TRTUoz0YXaIENW7ivROQPHHbzS9B/exec";
 
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 
-let dataList = [];
-let index = 0;
+let dataList=[],index=0;
 
-/* =======================
-   HITUNG TANGGAL SELESAI
-======================= */
-function hitungTanggalSelesai(tglMulai, lamaCuti, cutiBersama) {
-  let tgl = new Date(tglMulai);
-  let hitung = 0;
-
-  while (hitung < lamaCuti) {
-    const h = tgl.getDay();
-    if (h !== 0 && h !== 6) hitung++;
-    if (hitung < lamaCuti) tgl.setDate(tgl.getDate() + 1);
+/* HITUNG AKHIR CUTI */
+function hitungAkhir(tglMulai,lama,cb){
+  let t=new Date(tglMulai),h=0;
+  while(h<lama){
+    let d=t.getDay();
+    if(d!==0&&d!==6)h++;
+    if(h<lama)t.setDate(t.getDate()+1);
   }
-
-  let tambahan = parseInt(cutiBersama || 0);
-  while (tambahan > 0) {
-    tgl.setDate(tgl.getDate() + 1);
-    const h = tgl.getDay();
-    if (h !== 0 && h !== 6) tambahan--;
+  let add=parseInt(cb||0);
+  while(add>0){
+    t.setDate(t.getDate()+1);
+    let d=t.getDay();
+    if(d!==0&&d!==6)add--;
   }
-
-  return tgl.toISOString().split("T")[0];
+  return t.toISOString().split("T")[0];
 }
 
-/* =======================
-   LOAD DATA
-======================= */
-async function loadAll() {
-  const { data } = await supabaseClient
+/* LOAD DATA */
+async function loadAll(){
+  const {data}=await supabaseClient
     .from("pengajuan_cuti")
     .select("*")
-    .order("created_at", { ascending: false });
-
-  dataList = data || [];
+    .order("created_at",{ascending:false});
+  dataList=data||[];
   render();
   setupSearch();
 }
 
-/* =======================
-   RENDER
-======================= */
-function render() {
-  const d = dataList[index];
-  if (!d) return;
+/* RENDER */
+function render(){
+  const d=dataList[index];
+  if(!d)return;
+  const akhir=hitungAkhir(d.tgl_mulai,d.lama_cuti,d.cuti_bersama);
 
-  const akhirCuti = hitungTanggalSelesai(d.tgl_mulai, d.lama_cuti, d.cuti_bersama);
+  document.getElementById("card").innerHTML=`
+  <div class="grid">
+    <div><div class="label">Nama</div>${d.nama}</div>
+    <div><div class="label">NIP</div>${d.nip}</div>
 
-  document.getElementById("card").innerHTML = `
-    <div class="grid">
-      <div class="item"><div class="label">Nama</div>${d.nama}</div>
-      <div class="item"><div class="label">NIP</div>${d.nip}</div>
+    <div><div class="label">Jabatan</div>${d.jabatan||"-"}</div>
+    <div><div class="label">No HP</div>${d.no_hp}</div>
 
-      <div class="item"><div class="label">Jabatan</div>${d.jabatan || "-"}</div>
-      <div class="item"><div class="label">No HP</div>${d.no_hp}</div>
+    <div><div class="label">Jenis Cuti</div>${d.jenis_cuti}</div>
+    <div><div class="label">Alamat</div>${d.alamat}</div>
 
-      <div class="item"><div class="label">Jenis Cuti</div>${d.jenis_cuti}</div>
-      <div class="item"><div class="label">Alamat</div>${d.alamat}</div>
-
-      <div class="item">
-        <div class="label">Cuti Bersama (hari)</div>
-        <input type="number" id="cutiBersama" value="${d.cuti_bersama || 0}">
-      </div>
-
-      <div class="item">
-        <div class="label">Sisa Cuti</div>
-        <input type="number" id="sisaCuti" placeholder="Isi sisa cuti">
-      </div>
-
-      <div class="item">
-        <div class="label">Akhir Cuti</div>
-        <b id="akhirCuti">${akhirCuti}</b>
-      </div>
+    <div>
+      <div class="label">Cuti Bersama (hari)</div>
+      <input type="number" id="cb" value="${d.cuti_bersama||0}">
+    </div>
+    <div>
+      <div class="label">Sisa Cuti</div>
+      <input type="number" id="sisa">
     </div>
 
-    <div class="actions">
-      <button class="btn btn-save" onclick="simpanPerubahan()">Simpan</button>
-      <button class="btn btn-doc" onclick="buatDokumen(1)">Buat Dokumen V1</button>
-      <button class="btn btn-doc" onclick="buatDokumen(2)">Buat Dokumen V2</button>
+    <div>
+      <div class="label">Akhir Cuti</div>
+      <b id="akhir">${akhir}</b>
     </div>
+  </div>
 
-    <div class="loading" id="loading">⏳ Sedang membuat dokumen...</div>
-    <div id="docLink"></div>
+  <div class="actions">
+    <button class="btn btn-save" onclick="simpan()">Simpan</button>
+    <button class="btn btn-doc" onclick="buatDokumen(1)">Buat Dokumen V1</button>
+    <button class="btn btn-doc" onclick="buatDokumen(2)">Buat Dokumen V2</button>
+  </div>
+
+  <div class="loading" id="loading">⏳ Membuat dokumen...</div>
+  <div class="doc-link" id="docLink"></div>
   `;
 }
 
-/* =======================
-   SIMPAN CUTI BERSAMA
-======================= */
-async function simpanPerubahan() {
-  const d = dataList[index];
-  const cb = parseInt(document.getElementById("cutiBersama").value || 0);
-  const akhir = hitungTanggalSelesai(d.tgl_mulai, d.lama_cuti, cb);
+/* SIMPAN */
+async function simpan(){
+  const d=dataList[index];
+  const cb=parseInt(document.getElementById("cb").value||0);
+  const akhir=hitungAkhir(d.tgl_mulai,d.lama_cuti,cb);
 
   await supabaseClient
     .from("pengajuan_cuti")
-    .update({ cuti_bersama: cb, tgl_selesai: akhir })
-    .eq("id", d.id);
+    .update({cuti_bersama:cb,tgl_selesai:akhir})
+    .eq("id",d.id);
 
-  d.cuti_bersama = cb;
-  d.tgl_selesai = akhir;
-  document.getElementById("akhirCuti").innerText = akhir;
+  d.cuti_bersama=cb;
+  d.tgl_selesai=akhir;
+  document.getElementById("akhir").innerText=akhir;
   alert("Perubahan disimpan");
 }
 
-/* =======================
-   BUAT DOKUMEN + LOADING
-======================= */
-async function buatDokumen(versi) {
-  const d = dataList[index];
-  const sisa = document.getElementById("sisaCuti").value || "";
-  const cb = document.getElementById("cutiBersama").value || 0;
-  const akhir = hitungTanggalSelesai(d.tgl_mulai, d.lama_cuti, cb);
+/* BUAT DOKUMEN */
+async function buatDokumen(v){
+  const d=dataList[index];
+  const sisa=document.getElementById("sisa").value||"";
+  const cb=document.getElementById("cb").value||0;
+  const akhir=hitungAkhir(d.tgl_mulai,d.lama_cuti,cb);
 
-  document.getElementById("loading").style.display = "block";
-  document.getElementById("docLink").innerHTML = "";
+  document.getElementById("loading").style.display="block";
+  document.getElementById("docLink").innerHTML="";
 
-  const params = new URLSearchParams({
-    versi,
-    NAMA: d.nama,
-    NIP: d.nip,
-    JABATAN: d.jabatan || "",
-    JENIS_CUTI: d.jenis_cuti,
-    LAMA_CUTI: d.lama_cuti,
-    AWAL_CUTI: d.tgl_mulai,
-    AKHIR_CUTI: akhir,
-    SISA_CUTI: sisa,
-    ALAMAT: d.alamat,
-    HP: d.no_hp,
-    TTD: d.signature_url
+  const p=new URLSearchParams({
+    versi:v,
+    NAMA:d.nama,
+    NIP:d.nip,
+    JABATAN:d.jabatan||"",
+    JENIS_CUTI:d.jenis_cuti,
+    LAMA_CUTI:d.lama_cuti,
+    AWAL_CUTI:d.tgl_mulai,
+    AKHIR_CUTI:akhir,
+    SISA_CUTI:sisa,
+    ALAMAT:d.alamat,
+    HP:d.no_hp,
+    TTD:d.signature_url
   });
 
-  const res = await fetch(GAS_URL + "?" + params.toString());
-  const json = await res.json();
+  const r=await fetch(GAS_URL+"?"+p.toString());
+  const j=await r.json();
+  document.getElementById("loading").style.display="none";
 
-  document.getElementById("loading").style.display = "none";
-
-  if (json.success) {
-    document.getElementById("docLink").innerHTML =
-      `📄 Dokumen jadi: <a href="${json.url}" target="_blank">${json.name}</a>`;
-  } else {
-    alert("Gagal membuat dokumen");
-  }
+  if(j.success){
+    document.getElementById("docLink").innerHTML=
+      `📄 Dokumen: <a href="${j.url}" target="_blank">${j.name}</a>`;
+  }else alert("Gagal membuat dokumen");
 }
 
-/* =======================
-   NAVIGASI & SEARCH
-======================= */
-function nextData(){ if(index < dataList.length-1){ index++; render(); } }
-function prevData(){ if(index > 0){ index--; render(); } }
+/* NAVIGASI */
+function nextData(){if(index<dataList.length-1){index++;render();}}
+function prevData(){if(index>0){index--;render();}}
 
+/* SEARCH */
 function setupSearch(){
-  const i=document.getElementById("search"), s=document.getElementById("suggestions");
+  const i=document.getElementById("search"),s=document.getElementById("suggestions");
   i.addEventListener("input",()=>{
     s.innerHTML="";
     dataList.filter(d=>d.nama.toLowerCase().includes(i.value.toLowerCase()))
     .slice(0,7).forEach(d=>{
       const div=document.createElement("div");
       div.textContent=d.nama;
-      div.onclick=()=>{ index=dataList.findIndex(x=>x.id===d.id); render(); s.innerHTML=""; };
+      div.onclick=()=>{
+        index=dataList.findIndex(x=>x.id===d.id);
+        render();s.innerHTML="";
+      };
       s.appendChild(div);
     });
   });
