@@ -67,21 +67,29 @@ main{padding:20px;}
 
 .card{
   background:#fff;
-  max-width:1200px;
+  max-width:1300px;
   margin:20px auto;
-  padding:24px;
-  border-radius:10px;
+  padding:28px;
+  border-radius:12px;
+  box-shadow:0 6px 18px rgba(0,0,0,.08);
 }
 .grid{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:18px 40px;
 }
-.label{font-weight:600;margin-bottom:4px;}
+.label{font-weight:600;margin-bottom:6px;}
 input{
   width:100%;
-  padding:8px;
-  font-size:15px;
+  padding:10px;
+  font-size:16px;
+}
+
+.highlight{
+  background:#f8f9ff;
+  padding:14px;
+  border-radius:10px;
+  border:1px solid #dbe1ff;
 }
 
 .files{
@@ -100,18 +108,18 @@ input{
 }
 
 .actions{
-  margin-top:20px;
+  margin-top:24px;
   display:flex;
   gap:12px;
   flex-wrap:wrap;
 }
 .btn{
-  padding:10px 18px;
+  padding:12px 20px;
   border:none;
-  border-radius:6px;
+  border-radius:8px;
   cursor:pointer;
   color:#fff;
-  font-size:15px;
+  font-size:16px;
 }
 .btn-save{background:#198754;}
 .btn-doc{background:#6f42c1;}
@@ -121,7 +129,7 @@ input{
 
 .loading{
   display:none;
-  margin-top:10px;
+  margin-top:12px;
   font-weight:bold;
   color:#6f42c1;
 }
@@ -159,6 +167,7 @@ input{
 </main>
 
 <script>
+/* ================= CONFIG ================= */
 const SUPABASE_URL="https://ufiqibxdgwlysqhinqbz.supabase.co";
 const SUPABASE_ANON_KEY="sb_publishable_EVSVWnsUriOPA_O3RnGTpg_Zmd4pyAL";
 const GAS_URL="https://script.google.com/macros/s/AKfycbwo6wwtU0nqbYRqD_m4eNiCBgLYS6utiSmK_tv1TRTUoz0YXaIENW7ivROQPHHbzS9B/exec";
@@ -167,7 +176,7 @@ const supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 
 let dataList=[],index=0;
 
-/* HITUNG AKHIR CUTI */
+/* ================= HITUNG AKHIR CUTI ================= */
 function hitungAkhir(tglMulai,lama,cb){
   let t=new Date(tglMulai),h=0;
   while(h<lama){
@@ -184,7 +193,7 @@ function hitungAkhir(tglMulai,lama,cb){
   return t.toISOString().split("T")[0];
 }
 
-/* LOAD DATA */
+/* ================= LOAD DATA ================= */
 async function loadAll(){
   const {data}=await supabaseClient
     .from("pengajuan_cuti")
@@ -196,101 +205,106 @@ async function loadAll(){
   setupSearch();
 }
 
-/* RENDER */
+/* ================= RENDER ================= */
 function render(){
   const d=dataList[index];
   if(!d){
-    document.getElementById("card").innerHTML="<b>Tidak ada data</b>";
+    card.innerHTML="<b>Tidak ada data</b>";
     return;
   }
 
   const akhir=hitungAkhir(d.tgl_mulai,d.lama_cuti,d.cuti_bersama);
 
-  document.getElementById("card").innerHTML=`
-    <div class="grid">
-      <div><div class="label">Nama</div>${d.nama}</div>
-      <div><div class="label">NIP</div>${d.nip}</div>
+  card.innerHTML=`
+  <div class="grid">
 
-      <div><div class="label">Jabatan</div>${d.jabatan||"-"}</div>
-      <div><div class="label">No HP</div>${d.no_hp}</div>
-
-      <div><div class="label">Jenis Cuti</div>${d.jenis_cuti}</div>
-      <div><div class="label">Awal Cuti</div>${d.tgl_mulai}</div>
-
-      <div><div class="label">Alamat</div>${d.alamat}</div>
-
-      <div>
-        <div class="label">Cuti Bersama (hari)</div>
-        <input type="number" id="cb" value="${d.cuti_bersama||0}">
-      </div>
-      <div>
-        <div class="label">Sisa Cuti</div>
-        <input type="number" id="sisa">
-      </div>
-
-      <div>
-        <div class="label">Akhir Cuti</div>
-        <b id="akhir">${akhir}</b>
-      </div>
+    <div class="highlight">
+      <div class="label">Nomor Surat</div>
+      <input id="nomor_surat" value="${d.nomor_surat||""}">
     </div>
 
-    <div class="files">
-      <div class="label">Berkas & Tanda Tangan</div>
-      <div class="files-grid">
-        <div>
-          <div class="label">Persyaratan 1</div>
-          ${d.file_1_url ? `<a href="${d.file_1_url}" target="_blank">Lihat Berkas</a>` : "-"}
-        </div>
-        <div>
-          <div class="label">Persyaratan 2</div>
-          ${d.file_2_url ? `<a href="${d.file_2_url}" target="_blank">Lihat Berkas</a>` : "-"}
-        </div>
-        <div>
-          <div class="label">TTD</div>
-          ${d.signature_url ? `<a href="${d.signature_url}" target="_blank">Lihat TTD</a>` : "-"}
-        </div>
-      </div>
+    <div class="highlight">
+      <div class="label">Sisa Cuti</div>
+      <input id="sisa_cuti" value="${d.sisa_cuti||""}">
     </div>
 
-    <div class="actions">
-      <button class="btn btn-save" onclick="simpan()">Simpan</button>
-      <button class="btn btn-doc" id="doc1" onclick="buatDokumen(1)">Buat Dokumen V1</button>
-      <button class="btn btn-doc" id="doc2" onclick="buatDokumen(2)">Buat Dokumen V2</button>
-      <button class="btn btn-del" onclick="hapusData()">Hapus Data</button>
+    <div><div class="label">Nama</div>${d.nama}</div>
+    <div><div class="label">NIP</div>${d.nip}</div>
+
+    <div><div class="label">Jabatan</div>${d.jabatan||"-"}</div>
+    <div><div class="label">No HP</div>${d.no_hp}</div>
+
+    <div><div class="label">Jenis Cuti</div>${d.jenis_cuti}</div>
+    <div><div class="label">Awal Cuti</div>${d.tgl_mulai}</div>
+
+    <div><div class="label">Alamat</div>${d.alamat}</div>
+
+    <div>
+      <div class="label">Cuti Bersama</div>
+      <input type="number" id="cb" value="${d.cuti_bersama||0}">
     </div>
 
-    <div class="loading" id="loading">⏳ Membuat dokumen...</div>
-    <div class="doc-link" id="docLink"></div>
+    <div>
+      <div class="label">Akhir Cuti</div>
+      <b id="akhir">${akhir}</b>
+    </div>
+  </div>
+
+  <div class="files">
+    <div class="label">Berkas & Tanda Tangan</div>
+    <div class="files-grid">
+      <div>${d.file_1_url?`<a href="${d.file_1_url}" target="_blank">Persyaratan 1</a>`:"-"}</div>
+      <div>${d.file_2_url?`<a href="${d.file_2_url}" target="_blank">Persyaratan 2</a>`:"-"}</div>
+      <div>${d.signature_url?`<a href="${d.signature_url}" target="_blank">TTD</a>`:"-"}</div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-save" onclick="simpan()">Simpan</button>
+    <button class="btn btn-doc" onclick="buatDokumen(1)">Buat Dokumen V1</button>
+    <button class="btn btn-doc" onclick="buatDokumen(2)">Buat Dokumen V2</button>
+    <button class="btn btn-del" onclick="hapusData()">Hapus Data</button>
+  </div>
+
+  <div class="loading" id="loading">⏳ Membuat dokumen...</div>
+  <div class="doc-link" id="docLink"></div>
   `;
 }
 
-/* SIMPAN */
+/* ================= SIMPAN ================= */
 async function simpan(){
   const d=dataList[index];
   const cb=parseInt(document.getElementById("cb").value||0);
+  const nomor=document.getElementById("nomor_surat").value;
+  const sisa=document.getElementById("sisa_cuti").value;
   const akhir=hitungAkhir(d.tgl_mulai,d.lama_cuti,cb);
 
-  await supabaseClient
-    .from("pengajuan_cuti")
-    .update({cuti_bersama:cb,tgl_selesai:akhir})
-    .eq("id",d.id);
+  await supabaseClient.from("pengajuan_cuti").update({
+    cuti_bersama:cb,
+    tgl_selesai:akhir,
+    nomor_surat:nomor,
+    sisa_cuti:sisa
+  }).eq("id",d.id);
 
   d.cuti_bersama=cb;
   d.tgl_selesai=akhir;
+  d.nomor_surat=nomor;
+  d.sisa_cuti=sisa;
+
   document.getElementById("akhir").innerText=akhir;
   alert("Perubahan disimpan");
 }
 
-/* HAPUS DATA */
+/* ================= HAPUS DATA + FILE ================= */
 async function hapusData(){
   const d=dataList[index];
-  if(!confirm("Yakin hapus data "+d.nama+" ?")) return;
-  if(!confirm("Data dan berkas akan dihapus permanen!")) return;
+  if(!confirm("Yakin hapus data "+d.nama+" ?"))return;
+  if(!confirm("Data dan berkas akan dihapus permanen!"))return;
 
   const files=[];
-  if(d.file_1_url) files.push(getPath(d.file_1_url));
-  if(d.file_2_url) files.push(getPath(d.file_2_url));
-  if(d.signature_url) files.push(getPath(d.signature_url));
+  if(d.file_1_url)files.push(getPath(d.file_1_url));
+  if(d.file_2_url)files.push(getPath(d.file_2_url));
+  if(d.signature_url)files.push(getPath(d.signature_url));
 
   if(files.length){
     await supabaseClient.storage.from("cuti").remove(files);
@@ -299,83 +313,76 @@ async function hapusData(){
   await supabaseClient.from("pengajuan_cuti").delete().eq("id",d.id);
 
   dataList.splice(index,1);
-  if(index>=dataList.length) index=dataList.length-1;
+  if(index>=dataList.length)index=dataList.length-1;
   render();
-  alert("Data berhasil dihapus");
 }
 
+/* ================= PATH ================= */
 function getPath(url){
   return url.split("/storage/v1/object/public/cuti/")[1];
 }
 
-/* ===========================
-   OPTIMASI BUAT DOKUMEN
-   =========================== */
+/* ================= BUAT DOKUMEN ================= */
 async function buatDokumen(v){
   const d=dataList[index];
-  const sisa=document.getElementById("sisa").value||"";
-  const cb=document.getElementById("cb").value||0;
-  const akhir=hitungAkhir(d.tgl_mulai,d.lama_cuti,cb);
+  const akhir=d.tgl_selesai||hitungAkhir(d.tgl_mulai,d.lama_cuti,d.cuti_bersama);
 
-  const btn=document.getElementById("doc"+v);
-  btn.disabled=true;
+  loading.style.display="block";
+  docLink.innerHTML="";
 
-  document.getElementById("loading").style.display="block";
-  document.getElementById("docLink").innerHTML="";
+  const p=new URLSearchParams({
+    versi:v,
+    NAMA:d.nama,
+    NIP:d.nip,
+    JABATAN:d.jabatan||"",
+    JENIS_CUTI:d.jenis_cuti,
+    LAMA_CUTI:d.lama_cuti,
+    AWAL_CUTI:d.tgl_mulai,
+    AKHIR_CUTI:akhir,
+    SISA_CUTI:d.sisa_cuti||"",
+    NOMOR_SURAT:d.nomor_surat||"",
+    ALAMAT:d.alamat,
+    HP:d.no_hp,
+    TTD:d.signature_url||""
+  });
 
   try{
-    const p=new URLSearchParams({
-      versi:v,
-      NAMA:d.nama,
-      NIP:d.nip,
-      JABATAN:d.jabatan||"",
-      JENIS_CUTI:d.jenis_cuti,
-      LAMA_CUTI:d.lama_cuti,
-      AWAL_CUTI:d.tgl_mulai,
-      AKHIR_CUTI:akhir,
-      SISA_CUTI:sisa,
-      ALAMAT:d.alamat,
-      HP:d.no_hp,
-      TTD:d.signature_url
-    });
-
-    const r=await fetch(GAS_URL+"?"+p.toString(),{cache:"no-store"});
+    const r=await fetch(GAS_URL+"?"+p.toString());
     const j=await r.json();
 
     if(j.success){
-      document.getElementById("docLink").innerHTML=
-        `📄 Dokumen: <a href="${j.url}" target="_blank">${j.name}</a>`;
+      docLink.innerHTML=`📄 <a href="${j.url}" target="_blank">${j.name}</a>`;
       window.open(j.url,"_blank");
     }else{
       alert("Gagal membuat dokumen");
     }
   }catch(e){
-    alert("Terjadi kesalahan saat membuat dokumen");
+    alert("Error koneksi ke GAS");
   }finally{
-    document.getElementById("loading").style.display="none";
-    btn.disabled=false;
+    loading.style.display="none";
   }
 }
 
-/* NAVIGASI */
+/* ================= NAVIGASI ================= */
 function nextData(){if(index<dataList.length-1){index++;render();}}
 function prevData(){if(index>0){index--;render();}}
 
-/* SEARCH */
+/* ================= SEARCH ================= */
 function setupSearch(){
-  const i=document.getElementById("search"),s=document.getElementById("suggestions");
+  const i=document.getElementById("search");
+  const s=document.getElementById("suggestions");
   i.addEventListener("input",()=>{
     s.innerHTML="";
     dataList.filter(d=>d.nama.toLowerCase().includes(i.value.toLowerCase()))
-    .slice(0,7).forEach(d=>{
-      const div=document.createElement("div");
-      div.textContent=d.nama;
-      div.onclick=()=>{
-        index=dataList.findIndex(x=>x.id===d.id);
-        render();s.innerHTML="";
-      };
-      s.appendChild(div);
-    });
+      .slice(0,7).forEach(d=>{
+        const div=document.createElement("div");
+        div.textContent=d.nama;
+        div.onclick=()=>{
+          index=dataList.findIndex(x=>x.id===d.id);
+          render();s.innerHTML="";
+        };
+        s.appendChild(div);
+      });
   });
 }
 
