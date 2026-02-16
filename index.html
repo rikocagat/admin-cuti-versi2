@@ -116,6 +116,7 @@ input{
 .btn-save{background:#198754;}
 .btn-doc{background:#6f42c1;}
 .btn-nav{background:#0d6efd;}
+.btn-del{background:#dc3545;}
 
 .loading{
   display:none;
@@ -189,6 +190,7 @@ async function loadAll(){
     .select("*")
     .order("created_at",{ascending:false});
   dataList=data||[];
+  index=0;
   render();
   setupSearch();
 }
@@ -196,7 +198,10 @@ async function loadAll(){
 /* RENDER */
 function render(){
   const d=dataList[index];
-  if(!d)return;
+  if(!d){
+    document.getElementById("card").innerHTML="<b>Tidak ada data</b>";
+    return;
+  }
 
   const akhir=hitungAkhir(d.tgl_mulai,d.lama_cuti,d.cuti_bersama);
 
@@ -209,10 +214,8 @@ function render(){
       <div><div class="label">No HP</div>${d.no_hp}</div>
 
       <div><div class="label">Jenis Cuti</div>${d.jenis_cuti}</div>
-      <div>
-  <div class="label">Awal Cuti</div>
-  ${d.tgl_mulai}
-</div>
+      <div><div class="label">Awal Cuti</div>${d.tgl_mulai}</div>
+
       <div><div class="label">Alamat</div>${d.alamat}</div>
 
       <div>
@@ -252,6 +255,7 @@ function render(){
       <button class="btn btn-save" onclick="simpan()">Simpan</button>
       <button class="btn btn-doc" onclick="buatDokumen(1)">Buat Dokumen V1</button>
       <button class="btn btn-doc" onclick="buatDokumen(2)">Buat Dokumen V2</button>
+      <button class="btn btn-del" onclick="hapusData()">Hapus Data</button>
     </div>
 
     <div class="loading" id="loading">⏳ Membuat dokumen...</div>
@@ -274,6 +278,33 @@ async function simpan(){
   d.tgl_selesai=akhir;
   document.getElementById("akhir").innerText=akhir;
   alert("Perubahan disimpan");
+}
+
+/* HAPUS DATA + STORAGE */
+async function hapusData(){
+  const d=dataList[index];
+  if(!confirm("Yakin hapus data "+d.nama+" ?")) return;
+  if(!confirm("Data dan berkas akan dihapus permanen!")) return;
+
+  const files=[];
+  if(d.file_1_url) files.push(getPath(d.file_1_url));
+  if(d.file_2_url) files.push(getPath(d.file_2_url));
+  if(d.signature_url) files.push(getPath(d.signature_url));
+
+  if(files.length){
+    await supabaseClient.storage.from("cuti").remove(files);
+  }
+
+  await supabaseClient.from("pengajuan_cuti").delete().eq("id",d.id);
+
+  dataList.splice(index,1);
+  if(index>=dataList.length) index=dataList.length-1;
+  render();
+  alert("Data berhasil dihapus");
+}
+
+function getPath(url){
+  return url.split("/storage/v1/object/public/cuti/")[1];
 }
 
 /* BUAT DOKUMEN */
