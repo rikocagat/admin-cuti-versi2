@@ -117,6 +117,7 @@ input{
 .btn-doc{background:#6f42c1;}
 .btn-nav{background:#0d6efd;}
 .btn-del{background:#dc3545;}
+.btn[disabled]{opacity:.6;cursor:not-allowed;}
 
 .loading{
   display:none;
@@ -253,8 +254,8 @@ function render(){
 
     <div class="actions">
       <button class="btn btn-save" onclick="simpan()">Simpan</button>
-      <button class="btn btn-doc" onclick="buatDokumen(1)">Buat Dokumen V1</button>
-      <button class="btn btn-doc" onclick="buatDokumen(2)">Buat Dokumen V2</button>
+      <button class="btn btn-doc" id="doc1" onclick="buatDokumen(1)">Buat Dokumen V1</button>
+      <button class="btn btn-doc" id="doc2" onclick="buatDokumen(2)">Buat Dokumen V2</button>
       <button class="btn btn-del" onclick="hapusData()">Hapus Data</button>
     </div>
 
@@ -280,7 +281,7 @@ async function simpan(){
   alert("Perubahan disimpan");
 }
 
-/* HAPUS DATA + STORAGE */
+/* HAPUS DATA */
 async function hapusData(){
   const d=dataList[index];
   if(!confirm("Yakin hapus data "+d.nama+" ?")) return;
@@ -307,39 +308,53 @@ function getPath(url){
   return url.split("/storage/v1/object/public/cuti/")[1];
 }
 
-/* BUAT DOKUMEN */
+/* ===========================
+   OPTIMASI BUAT DOKUMEN
+   =========================== */
 async function buatDokumen(v){
   const d=dataList[index];
   const sisa=document.getElementById("sisa").value||"";
   const cb=document.getElementById("cb").value||0;
   const akhir=hitungAkhir(d.tgl_mulai,d.lama_cuti,cb);
 
+  const btn=document.getElementById("doc"+v);
+  btn.disabled=true;
+
   document.getElementById("loading").style.display="block";
   document.getElementById("docLink").innerHTML="";
 
-  const p=new URLSearchParams({
-    versi:v,
-    NAMA:d.nama,
-    NIP:d.nip,
-    JABATAN:d.jabatan||"",
-    JENIS_CUTI:d.jenis_cuti,
-    LAMA_CUTI:d.lama_cuti,
-    AWAL_CUTI:d.tgl_mulai,
-    AKHIR_CUTI:akhir,
-    SISA_CUTI:sisa,
-    ALAMAT:d.alamat,
-    HP:d.no_hp,
-    TTD:d.signature_url
-  });
+  try{
+    const p=new URLSearchParams({
+      versi:v,
+      NAMA:d.nama,
+      NIP:d.nip,
+      JABATAN:d.jabatan||"",
+      JENIS_CUTI:d.jenis_cuti,
+      LAMA_CUTI:d.lama_cuti,
+      AWAL_CUTI:d.tgl_mulai,
+      AKHIR_CUTI:akhir,
+      SISA_CUTI:sisa,
+      ALAMAT:d.alamat,
+      HP:d.no_hp,
+      TTD:d.signature_url
+    });
 
-  const r=await fetch(GAS_URL+"?"+p.toString());
-  const j=await r.json();
-  document.getElementById("loading").style.display="none";
+    const r=await fetch(GAS_URL+"?"+p.toString(),{cache:"no-store"});
+    const j=await r.json();
 
-  if(j.success){
-    document.getElementById("docLink").innerHTML=
-      `📄 Dokumen: <a href="${j.url}" target="_blank">${j.name}</a>`;
-  }else alert("Gagal membuat dokumen");
+    if(j.success){
+      document.getElementById("docLink").innerHTML=
+        `📄 Dokumen: <a href="${j.url}" target="_blank">${j.name}</a>`;
+      window.open(j.url,"_blank");
+    }else{
+      alert("Gagal membuat dokumen");
+    }
+  }catch(e){
+    alert("Terjadi kesalahan saat membuat dokumen");
+  }finally{
+    document.getElementById("loading").style.display="none";
+    btn.disabled=false;
+  }
 }
 
 /* NAVIGASI */
