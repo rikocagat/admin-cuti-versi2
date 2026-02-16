@@ -9,38 +9,42 @@
 
 <style>
 body {
-  font-family: Arial, sans-serif;
-  background: #f3f5f8;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: #eef1f5;
   margin: 0;
-  padding: 16px;
+  padding: 20px;
 }
+
 h1 {
   text-align: center;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
+  font-size: 26px;
 }
 
 .search-box {
-  max-width: 500px;
+  max-width: 700px;
   margin: auto;
   position: relative;
 }
 .search-box input {
   width: 100%;
-  padding: 8px;
-  font-size: 14px;
+  padding: 12px;
+  font-size: 16px;
 }
+
 .suggestions {
   position: absolute;
   background: #fff;
   width: 100%;
   border: 1px solid #ccc;
-  max-height: 200px;
+  max-height: 220px;
   overflow-y: auto;
   z-index: 10;
 }
 .suggestions div {
-  padding: 6px;
+  padding: 8px;
   cursor: pointer;
+  font-size: 15px;
 }
 .suggestions div:hover {
   background: #e9ecef;
@@ -48,40 +52,54 @@ h1 {
 
 .card {
   background: #fff;
-  max-width: 600px;
-  margin: 20px auto;
-  padding: 14px;
-  border-radius: 6px;
-}
-.item {
-  margin-bottom: 10px;
-}
-.label {
-  font-weight: bold;
-  font-size: 13px;
-}
-.value {
-  font-size: 14px;
+  max-width: 1100px;
+  margin: 25px auto;
+  padding: 24px;
+  border-radius: 10px;
 }
 
-select, button {
-  padding: 6px;
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 40px;
+}
+
+.item {
+  font-size: 15px;
+}
+.label {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.value {
+  font-size: 16px;
+}
+
+input, select {
   width: 100%;
-  margin-top: 4px;
+  padding: 8px;
+  font-size: 15px;
 }
+
 .actions {
+  margin-top: 25px;
   display: flex;
-  gap: 10px;
+  justify-content: space-between;
+  gap: 20px;
 }
+
 .btn {
-  cursor: pointer;
+  padding: 10px 18px;
+  font-size: 15px;
   border: none;
+  border-radius: 6px;
+  cursor: pointer;
   color: #fff;
-  border-radius: 4px;
 }
 .btn-save { background: #198754; }
 .btn-nav { background: #0d6efd; }
-a { color: #0d6efd; }
+
+a { color: #0d6efd; font-size: 15px; }
 </style>
 </head>
 
@@ -96,9 +114,9 @@ a { color: #0d6efd; }
 
 <div class="card" id="card"></div>
 
-<div class="actions" style="max-width:600px;margin:auto;">
-  <button class="btn btn-nav" onclick="prevData()">Prev</button>
-  <button class="btn btn-nav" onclick="nextData()">Next</button>
+<div class="actions" style="max-width:1100px;margin:auto;">
+  <button class="btn btn-nav" onclick="prevData()">◀ Sebelumnya</button>
+  <button class="btn btn-nav" onclick="nextData()">Berikutnya ▶</button>
 </div>
 
 <script>
@@ -117,9 +135,9 @@ let dataList = [];
 let index = 0;
 
 /* =============================
-   HITUNG TGL SELESAI (TETAP)
+   HITUNG TGL SELESAI
 ============================= */
-function hitungTanggalSelesai(tglMulai, lamaCuti, cutiBersama) {
+function hitungTanggalSelesai(tglMulai, lamaCuti, jmlCutiBersama) {
   let tgl = new Date(tglMulai);
   let hitung = 0;
 
@@ -129,17 +147,18 @@ function hitungTanggalSelesai(tglMulai, lamaCuti, cutiBersama) {
     if (hitung < lamaCuti) tgl.setDate(tgl.getDate() + 1);
   }
 
-  if (cutiBersama === 1) {
-    do {
-      tgl.setDate(tgl.getDate() + 1);
-    } while (tgl.getDay() === 0 || tgl.getDay() === 6);
+  let tambahan = parseInt(jmlCutiBersama || 0);
+  while (tambahan > 0) {
+    tgl.setDate(tgl.getDate() + 1);
+    const h = tgl.getDay();
+    if (h !== 0 && h !== 6) tambahan--;
   }
 
   return tgl.toISOString().split("T")[0];
 }
 
 /* =============================
-   LOAD SEMUA DATA
+   LOAD DATA
 ============================= */
 async function loadAll() {
   const { data, error } = await supabaseClient
@@ -162,50 +181,55 @@ function render() {
   if (!d) return;
 
   document.getElementById("card").innerHTML = `
-    <div class="item"><div class="label">Nama</div><div class="value">${d.nama}</div></div>
-    <div class="item"><div class="label">NIP</div><div class="value">${d.nip}</div></div>
-    <div class="item"><div class="label">No HP</div><div class="value">${d.no_hp}</div></div>
-    <div class="item"><div class="label">Jenis Cuti</div><div class="value">${d.jenis_cuti}</div></div>
-    <div class="item"><div class="label">Tanggal Mulai</div><div class="value">${d.tgl_mulai}</div></div>
-    <div class="item"><div class="label">Lama Cuti</div><div class="value">${d.lama_cuti}</div></div>
-    <div class="item"><div class="label">Alamat</div><div class="value">${d.alamat}</div></div>
+    <div class="grid">
+      <div class="item"><div class="label">Nama</div><div class="value">${d.nama}</div></div>
+      <div class="item"><div class="label">NIP</div><div class="value">${d.nip}</div></div>
 
-    <div class="item"><div class="label">File 1</div>${d.file_1_url ? `<a href="${d.file_1_url}" target="_blank">Lihat</a>` : "-"}</div>
-    <div class="item"><div class="label">File 2</div>${d.file_2_url ? `<a href="${d.file_2_url}" target="_blank">Lihat</a>` : "-"}</div>
-    <div class="item"><div class="label">Signature</div>${d.signature_url ? `<a href="${d.signature_url}" target="_blank">Lihat</a>` : "-"}</div>
+      <div class="item"><div class="label">No HP</div><div class="value">${d.no_hp}</div></div>
+      <div class="item"><div class="label">Jenis Cuti</div><div class="value">${d.jenis_cuti}</div></div>
 
-    <div class="item">
-      <div class="label">Cuti Bersama</div>
-      <select id="cb">
-        <option value="0" ${d.cuti_bersama == 0 ? "selected" : ""}>Tidak</option>
-        <option value="1" ${d.cuti_bersama == 1 ? "selected" : ""}>Ya</option>
-      </select>
+      <div class="item"><div class="label">Tanggal Mulai</div><div class="value">${d.tgl_mulai}</div></div>
+      <div class="item"><div class="label">Lama Cuti</div><div class="value">${d.lama_cuti} hari</div></div>
+
+      <div class="item"><div class="label">Cuti Bersama (hari)</div>
+        <input type="number" id="cb" min="0" value="${d.cuti_bersama || 0}">
+      </div>
+
+      <div class="item"><div class="label">Alamat</div><div class="value">${d.alamat}</div></div>
+
+      <div class="item"><div class="label">File 1</div>${d.file_1_url ? `<a href="${d.file_1_url}" target="_blank">Lihat</a>` : "-"}</div>
+      <div class="item"><div class="label">File 2</div>${d.file_2_url ? `<a href="${d.file_2_url}" target="_blank">Lihat</a>` : "-"}</div>
+
+      <div class="item"><div class="label">Signature</div>${d.signature_url ? `<a href="${d.signature_url}" target="_blank">Lihat</a>` : "-"}</div>
+
+      <div class="item">
+        <div class="label">Status</div>
+        <select id="status">
+          <option ${d.status === "Diajukan" ? "selected" : ""}>Diajukan</option>
+          <option ${d.status === "Disetujui" ? "selected" : ""}>Disetujui</option>
+          <option ${d.status === "Ditolak" ? "selected" : ""}>Ditolak</option>
+        </select>
+      </div>
+
+      <div class="item">
+        <div class="label">Tanggal Selesai</div>
+        <div class="value" id="tglSelesai">${d.tgl_selesai || "-"}</div>
+      </div>
     </div>
 
-    <div class="item">
-      <div class="label">Status</div>
-      <select id="status">
-        <option ${d.status === "Diajukan" ? "selected" : ""}>Diajukan</option>
-        <option ${d.status === "Disetujui" ? "selected" : ""}>Disetujui</option>
-        <option ${d.status === "Ditolak" ? "selected" : ""}>Ditolak</option>
-      </select>
+    <div class="actions">
+      <button class="btn btn-save" onclick="save()">Simpan Perubahan</button>
     </div>
-
-    <div class="item"><div class="label">Tanggal Selesai</div>
-      <div class="value" id="tglSelesai">${d.tgl_selesai || "-"}</div>
-    </div>
-
-    <button class="btn btn-save" onclick="save()">Simpan</button>
   `;
 }
 
 /* =============================
-   UPDATE DATA
+   UPDATE
 ============================= */
 async function save() {
   const d = dataList[index];
-  const cb = parseInt(document.getElementById("cb").value);
   const status = document.getElementById("status").value;
+  const cb = parseInt(document.getElementById("cb").value || 0);
 
   const tglSelesai = hitungTanggalSelesai(
     d.tgl_mulai,
@@ -227,8 +251,8 @@ async function save() {
   d.status = status;
   d.cuti_bersama = cb;
   d.tgl_selesai = tglSelesai;
-  document.getElementById("tglSelesai").innerText = tglSelesai;
 
+  document.getElementById("tglSelesai").innerText = tglSelesai;
   alert("Data berhasil diperbarui");
 }
 
@@ -262,14 +286,14 @@ function setupSearch() {
 
     dataList
       .filter(d => d.nama.toLowerCase().includes(val))
-      .slice(0, 5)
+      .slice(0, 7)
       .forEach(d => {
         const div = document.createElement("div");
         div.textContent = d.nama;
         div.onclick = () => {
           index = dataList.findIndex(x => x.id === d.id);
-          sug.innerHTML = "";
           input.value = d.nama;
+          sug.innerHTML = "";
           render();
         };
         sug.appendChild(div);
