@@ -353,12 +353,16 @@ async function simpan(){
   const cutiBersama = parseInt(document.getElementById("cb").value || 0);
   const sisaCuti    = document.getElementById("sisa_cuti").value.trim();
 
-  // hitung ulang akhir cuti
-  const akhirCuti = hitungAkhir(tglMulai, lamaCuti, cutiBersama);
+// ambil nilai status (INI YANG KURANG)
+const status = document.getElementById("status").value;
 
-  const btn = event.target;
-  btn.disabled = true;
-  btn.textContent = "Menyimpan...";
+// hitung ulang akhir cuti
+const akhirCuti = hitungAkhir(tglMulai, lamaCuti, cutiBersama);
+
+const btn = event.target;
+btn.disabled = true;
+btn.textContent = "Menyimpan...";
+
 const { error } = await supabaseClient
   .from("pengajuan_cuti")
   .update({
