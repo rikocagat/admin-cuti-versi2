@@ -106,9 +106,10 @@ async function loadAll(){
 
   dataList = data || [];
   index = 0;
-  render();
-}
 
+  render();
+  setupSearch(); // ← WAJIB
+}
 /* ================= RENDER ================= */
 function render(){
   const d = dataList[index];
@@ -270,19 +271,42 @@ function bukaDokTerakhir(){
 function nextData(){if(index<dataList.length-1){index++;render();}}
 function prevData(){if(index>0){index--;render();}}
 function setupSearch(){
-  const i=document.getElementById("search"),s=document.getElementById("suggestions");
-  i.addEventListener("input",()=>{
-    s.innerHTML="";
-    dataList.filter(d=>d.nama.toLowerCase().includes(i.value.toLowerCase()))
-      .slice(0,7).forEach(d=>{
-        const div=document.createElement("div");
-        div.textContent=d.nama;
-        div.onclick=()=>{index=dataList.findIndex(x=>x.id===d.id);render();s.innerHTML="";};
-        s.appendChild(div);
-      });
-  });
-}
+  const input = document.getElementById("search");
+  const box   = document.getElementById("suggestions");
 
+  function fuzzyMatch(text, pattern){
+    text = text.toLowerCase();
+    pattern = pattern.toLowerCase();
+
+    let ti = 0, pi = 0;
+    while(ti < text.length && pi < pattern.length){
+      if(text[ti] === pattern[pi]) pi++;
+      ti++;
+    }
+    return pi === pattern.length;
+  }
+
+  input.oninput = () => {
+    const q = input.value.trim();
+    box.innerHTML = "";
+    if(!q) return;
+
+    dataList
+      .filter(d => d.nama && fuzzyMatch(d.nama, q))
+      .slice(0,7)
+      .forEach(d => {
+        const div = document.createElement("div");
+        div.textContent = d.nama;
+        div.onclick = () => {
+          index = dataList.findIndex(x => x.id === d.id);
+          render();
+          box.innerHTML = "";
+          input.value = d.nama;
+        };
+        box.appendChild(div);
+      });
+  };
+}
 loadAll();
 async function simpan(){
   const d = dataList[index];
