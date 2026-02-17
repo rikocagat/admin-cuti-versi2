@@ -291,15 +291,15 @@ async function simpan(){
     return;
   }
 
-  const nomorSurat = document.getElementById("nomor_surat").value.trim();
-  const sisaCuti   = document.getElementById("sisa_cuti").value.trim();
-  const cutiBersama= parseInt(document.getElementById("cb").value || 0);
+  // ambil input kanan
+  const nomorSurat  = document.getElementById("nomor_surat").value.trim();
+  const tglMulai    = document.getElementById("tgl_mulai").value;
+  const lamaCuti    = parseInt(document.getElementById("lama_cuti").value || 0);
+  const cutiBersama = parseInt(document.getElementById("cb").value || 0);
+  const sisaCuti    = document.getElementById("sisa_cuti").value.trim();
 
-  const akhirCuti  = hitungAkhir(
-    d.tgl_mulai,
-    d.lama_cuti,
-    cutiBersama
-  );
+  // hitung ulang akhir cuti
+  const akhirCuti = hitungAkhir(tglMulai, lamaCuti, cutiBersama);
 
   const btn = event.target;
   btn.disabled = true;
@@ -309,8 +309,10 @@ async function simpan(){
     .from("pengajuan_cuti")
     .update({
       nomor_surat : nomorSurat,
-      sisa_cuti   : sisaCuti,
+      tgl_mulai   : tglMulai,
+      lama_cuti   : lamaCuti,
       cuti_bersama: cutiBersama,
+      sisa_cuti   : sisaCuti,
       tgl_selesai : akhirCuti
     })
     .eq("id", d.id);
@@ -323,35 +325,16 @@ async function simpan(){
     return;
   }
 
-  // update data lokal agar tidak reload
-  d.nomor_surat  = nomorSurat;
-  d.sisa_cuti    = sisaCuti;
-  d.cuti_bersama = cutiBersama;
-  d.tgl_selesai  = akhirCuti;
+  // update data lokal (ANTI HILANG SAAT REFRESH)
+  d.nomor_surat   = nomorSurat;
+  d.tgl_mulai     = tglMulai;
+  d.lama_cuti     = lamaCuti;
+  d.cuti_bersama  = cutiBersama;
+  d.sisa_cuti     = sisaCuti;
+  d.tgl_selesai   = akhirCuti;
 
   render();
   alert("Data berhasil disimpan");
-}
-  async function hapusData(){
-  if(!confirm("Yakin hapus data ini?")) return;
-
-  const d = dataList[index];
-
-  const { error } = await supabaseClient
-    .from("pengajuan_cuti")
-    .delete()
-    .eq("id", d.id);
-
-  if(error){
-    alert("Gagal menghapus data");
-    return;
-  }
-
-  dataList.splice(index,1);
-  if(index>0) index--;
-  render();
-
-  alert("Data berhasil dihapus");
 }
 </script>
 
