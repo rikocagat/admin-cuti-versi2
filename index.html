@@ -37,6 +37,28 @@ input{width:100%;padding:10px;font-size:16px}
 .btn[disabled]{opacity:.6;cursor:not-allowed}
 .loading{display:none;margin-top:12px;font-weight:bold;color:#6f42c1}
 .doc-link{margin-top:10px;font-weight:600}
+  .toast{
+  position:fixed;
+  bottom:24px;
+  right:24px;
+  background:#198754;
+  color:#fff;
+  padding:14px 20px;
+  border-radius:10px;
+  font-weight:600;
+  box-shadow:0 8px 20px rgba(0,0,0,.15);
+  opacity:0;
+  transform:translateY(20px);
+  transition:.3s ease;
+  z-index:9999;
+}
+.toast.show{
+  opacity:1;
+  transform:translateY(0);
+}
+.toast.error{
+  background:#dc3545;
+}
 </style>
 </head>
 
@@ -345,7 +367,7 @@ async function simpan(){
   btn.textContent = "Simpan";
 
   if(error){
-    alert("Gagal menyimpan: " + error.message);
+    showToast("❌ Gagal menyimpan data", "error");
     return;
   }
 
@@ -358,9 +380,15 @@ async function simpan(){
   d.tgl_selesai   = akhirCuti;
 
   render();
-  alert("Data berhasil disimpan");
+  showToast("✅ Data berhasil disimpan");
+}
+  function showToast(msg, type="success"){
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "toast show" + (type==="error" ? " error" : "");
+  setTimeout(()=>t.classList.remove("show"), 2500);
 }
 </script>
-
+<div id="toast" class="toast"></div>
 </body>
 </html>
