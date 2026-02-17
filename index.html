@@ -103,66 +103,99 @@ async function loadAll(){
   dataList=data||[];
   index=0;
   render();
-  setupSearch();
+  /* ================= RENDER ================= */
+function render(){
+  const d = dataList[index];
+  if(!d){
+    card.innerHTML = "<b>Tidak ada data</b>";
+    return;
+  }
+
+  const akhir = d.tgl_selesai || hitungAkhir(
+    d.tgl_mulai,
+    d.lama_cuti,
+    d.cuti_bersama
+  );
+
+  card.innerHTML = `
+  <div class="grid">
+    <!-- KIRI -->
+    <div>
+      <div class="label">Nama</div>
+      <input id="nama" value="${d.nama}">
+    </div>
+    <div>
+      <div class="label">Nomor Surat</div>
+      <input id="nomor_surat" value="${d.nomor_surat||""}">
+    </div>
+
+    <div>
+      <div class="label">NIP</div>
+      <input id="nip" value="${d.nip}">
+    </div>
+    <div>
+      <div class="label">Awal Cuti</div>
+      <input id="tgl_mulai" type="date" value="${d.tgl_mulai}">
+    </div>
+
+    <div>
+      <div class="label">Jabatan</div>
+      <input id="jabatan" value="${d.jabatan||""}">
+    </div>
+    <div>
+      <div class="label">Akhir Cuti</div>
+      <input id="akhir" value="${akhir}">
+    </div>
+
+    <div>
+      <div class="label">Jenis Cuti</div>
+      <input id="jenis_cuti" value="${d.jenis_cuti}">
+    </div>
+    <div>
+      <div class="label">Lama Cuti</div>
+      <input id="lama_cuti" type="number" value="${d.lama_cuti}">
+    </div>
+
+    <div>
+      <div class="label">Alamat</div>
+      <input id="alamat" value="${d.alamat||""}">
+    </div>
+    <div>
+      <div class="label">Sisa Cuti</div>
+      <input id="sisa_cuti" value="${d.sisa_cuti||""}">
+    </div>
+
+    <div>
+      <div class="label">No HP</div>
+      <input id="no_hp" value="${d.no_hp||""}">
+    </div>
+    <div>
+      <div class="label">Cuti Bersama</div>
+      <input id="cb" type="number" value="${d.cuti_bersama||0}">
+    </div>
+  </div>
+
+  <div class="files">
+    <div class="label">Berkas & Tanda Tangan</div>
+    <div class="files-grid">
+      <div>${d.file_1_url ? `<a href="${d.file_1_url}" target="_blank">Persyaratan 1</a>` : "-"}</div>
+      <div>${d.file_2_url ? `<a href="${d.file_2_url}" target="_blank">Persyaratan 2</a>` : "-"}</div>
+      <div>${d.signature_url ? `<a href="${d.signature_url}" target="_blank">TTD</a>` : "-"}</div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-save" onclick="simpan()">Simpan</button>
+    <button class="btn btn-doc" onclick="buatDokumen(1)">Buat Dokumen V1</button>
+    <button class="btn btn-doc" onclick="buatDokumen(2)">Buat Dokumen V2</button>
+    <button class="btn btn-nav" onclick="bukaDokTerakhir()">📂 Buka Dokumen Terakhir</button>
+    <button class="btn btn-del" onclick="hapusData()">Hapus Data</button>
+  </div>
+
+  <div class="loading" id="loading">⏳ Membuat dokumen...</div>
+  <div class="doc-link" id="docLink"></div>
+  `;
 }
-
-<div class="grid">
-  <!-- KIRI -->
-  <div>
-    <div class="label">Nama</div>
-    <input id="nama" value="${d.nama}">
-  </div>
-  <div>
-    <div class="label">Nomor Surat</div>
-    <input id="nomor_surat" value="${d.nomor_surat||""}">
-  </div>
-
-  <div>
-    <div class="label">NIP</div>
-    <input id="nip" value="${d.nip}">
-  </div>
-  <div>
-    <div class="label">Awal Cuti</div>
-    <input id="tgl_mulai" type="date" value="${d.tgl_mulai}">
-  </div>
-
-  <div>
-    <div class="label">Jabatan</div>
-    <input id="jabatan" value="${d.jabatan||""}">
-  </div>
-  <div>
-    <div class="label">Akhir Cuti</div>
-    <input id="akhir" value="${akhir}">
-  </div>
-
-  <div>
-    <div class="label">Jenis Cuti</div>
-    <input id="jenis_cuti" value="${d.jenis_cuti}">
-  </div>
-  <div>
-    <div class="label">Lama Cuti</div>
-    <input id="lama_cuti" type="number" value="${d.lama_cuti}">
-  </div>
-
-  <div>
-    <div class="label">Alamat</div>
-    <input id="alamat" value="${d.alamat||""}">
-  </div>
-  <div>
-    <div class="label">Sisa Cuti</div>
-    <input id="sisa_cuti" value="${d.sisa_cuti||""}">
-  </div>
-
-  <div>
-    <div class="label">No HP</div>
-    <input id="no_hp" value="${d.no_hp||""}">
-  </div>
-  <div>
-    <div class="label">Cuti Bersama</div>
-    <input id="cb" type="number" value="${d.cuti_bersama||0}">
-  </div>
-</div>
-
 /* ================= BUAT DOKUMEN (FINAL & STABIL) ================= */
 async function buatDokumen(v){
   const d = dataList[index];
