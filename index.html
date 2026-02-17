@@ -99,11 +99,17 @@ function hitungAkhir(tglMulai,lama,cb){
 
 /* ================= LOAD DATA ================= */
 async function loadAll(){
-  const {data}=await supabaseClient.from("pengajuan_cuti").select("*").order("created_at",{ascending:false});
-  dataList=data||[];
-  index=0;
+  const { data } = await supabaseClient
+    .from("pengajuan_cuti")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  dataList = data || [];
+  index = 0;
   render();
-  /* ================= RENDER ================= */
+}
+
+/* ================= RENDER ================= */
 function render(){
   const d = dataList[index];
   if(!d){
