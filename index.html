@@ -199,11 +199,20 @@ function render(){
       <input id="no_hp" value="${d.no_hp||""}">
     </div>
     <div>
-      <div class="label">Cuti Bersama</div>
-      <input id="cb" type="number" value="${d.cuti_bersama||0}">
-    </div>
-  </div>
+  <div class="label">Cuti Bersama</div>
+  <input id="cb" type="number" value="${d.cuti_bersama||0}">
+</div>
 
+<div>
+  <div class="label">Status</div>
+  <select id="status">
+    <option ${d.status==="DIAJUKAN" ? "selected" : ""}>DIAJUKAN</option>
+    <option ${d.status==="PROSES TTD" ? "selected" : ""}>PROSES TTD</option>
+    <option ${d.status?.startsWith("SUDAH JADI") ? "selected" : ""}>
+      SUDAH JADI, DOWNLOAD DI MENU ARSIP DAN UPLOAD MELALUI ADMIN MASING-MASING BIDANG
+    </option>
+  </select>
+</div>
   <div class="files">
     <div class="label">Berkas & Tanda Tangan</div>
     <div class="files-grid">
@@ -350,21 +359,21 @@ async function simpan(){
   const btn = event.target;
   btn.disabled = true;
   btn.textContent = "Menyimpan...";
+const { error } = await supabaseClient
+  .from("pengajuan_cuti")
+  .update({
+    nomor_surat : nomorSurat,
+    tgl_mulai   : tglMulai,
+    lama_cuti   : lamaCuti,
+    cuti_bersama: cutiBersama,
+    sisa_cuti   : sisaCuti,
+    tgl_selesai : akhirCuti,
+    status      : status
+  })
+  .eq("id", d.id);
 
-  const { error } = await supabaseClient
-    .from("pengajuan_cuti")
-    .update({
-      nomor_surat : nomorSurat,
-      tgl_mulai   : tglMulai,
-      lama_cuti   : lamaCuti,
-      cuti_bersama: cutiBersama,
-      sisa_cuti   : sisaCuti,
-      tgl_selesai : akhirCuti
-    })
-    .eq("id", d.id);
-
-  btn.disabled = false;
-  btn.textContent = "Simpan";
+btn.disabled = false;
+btn.textContent = "Simpan";
 
   if(error){
     showToast("❌ Gagal menyimpan data", "error");
