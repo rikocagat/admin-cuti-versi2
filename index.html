@@ -232,6 +232,54 @@ function setupSearch(){
 }
 
 loadAll();
+async function simpan(){
+  const d = dataList[index];
+  if(!d || !d.id){
+    alert("Data tidak valid");
+    return;
+  }
+
+  const nomorSurat = document.getElementById("nomor_surat").value.trim();
+  const sisaCuti   = document.getElementById("sisa_cuti").value.trim();
+  const cutiBersama= parseInt(document.getElementById("cb").value || 0);
+
+  const akhirCuti  = hitungAkhir(
+    d.tgl_mulai,
+    d.lama_cuti,
+    cutiBersama
+  );
+
+  const btn = event.target;
+  btn.disabled = true;
+  btn.textContent = "Menyimpan...";
+
+  const { error } = await supabaseClient
+    .from("pengajuan_cuti")
+    .update({
+      nomor_surat : nomorSurat,
+      sisa_cuti   : sisaCuti,
+      cuti_bersama: cutiBersama,
+      tgl_selesai : akhirCuti
+    })
+    .eq("id", d.id);
+
+  btn.disabled = false;
+  btn.textContent = "Simpan";
+
+  if(error){
+    alert("Gagal menyimpan: " + error.message);
+    return;
+  }
+
+  // update data lokal agar tidak reload
+  d.nomor_surat  = nomorSurat;
+  d.sisa_cuti    = sisaCuti;
+  d.cuti_bersama = cutiBersama;
+  d.tgl_selesai  = akhirCuti;
+
+  render();
+  alert("Data berhasil disimpan");
+}
 </script>
 
 </body>
